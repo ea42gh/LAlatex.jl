@@ -1,3 +1,47 @@
-/Manifest*.toml
-/docs/Manifest*.toml
-/docs/build/
+# --- Julia / Pkg ---
+*.ji
+*.so
+*.dylib
+*.dll
+*.o
+*.a
+
+# Local environments / manifests
+Manifest.toml
+Manifest*.toml
+
+# Coverage / profiling
+*.cov
+*.mem
+*.prof
+
+# Pkg scratch / logs
+.CondPkg/
+.julia/
+logs/
+
+# --- Documenter.jl ---
+docs/build/
+docs/site/
+docs/Manifest*.toml
+
+# --- Notebooks ---
+.ipynb_checkpoints/
+*.nb.html
+
+# --- Python / PythonCall (if applicable) ---
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+.python-version
+
+# --- Editors ---
+.vscode/
+.idea/
+*.swp
+*~
+.DS_Store
+Thumbs.db
+
