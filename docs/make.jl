@@ -1,0 +1,23 @@
+using LAlatex
+using Documenter
+
+DocMeta.setdocmeta!(LAlatex, :DocTestSetup, :(using LAlatex); recursive=true)
+
+makedocs(;
+    modules=[LAlatex],
+    authors="ea42_github@mail.com",
+    sitename="LAlatex.jl",
+    format=Documenter.HTML(;
+        canonical="https://ea42gh.github.io/LAlatex.jl",
+        edit_link="main",
+        assets=String[],
+    ),
+    pages=[
+        "Home" => "index.md",
+    ],
+)
+
+deploydocs(;
+    repo="github.com/ea42gh/LAlatex.jl",
+    devbranch="main",
+)
