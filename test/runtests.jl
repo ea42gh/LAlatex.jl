@@ -1,5 +1,6 @@
 using Test
 using LaTeXStrings
+using PythonCall
 
 if !haskey(ENV, "JULIA_PYTHONCALL_EXE") || isempty(ENV["JULIA_PYTHONCALL_EXE"])
     for name in ("python3", "python")
@@ -139,6 +140,8 @@ end
     @testset "LaTeX helpers" begin
         LAlatex.set_backend!(:symbolics)
         @test LAlatex.to_latex("a_b") == "\\text{a\\_b}"
+        @test LAlatex.to_latex("= 0") == "= 0"
+        @test LAlatex.to_latex(LaTeXString("\\alpha + 1")) == "\\alpha + 1"
         @test LAlatex.to_latex('x') == "\\text{x}"
         @test LAlatex.to_latex(3//4) == "\\frac{3}{4}"
         @test LAlatex.to_latex(2 + 0im) == "2"
@@ -229,12 +232,55 @@ end
         np = LAlatex.print_np_array_def([1, 2, 3]; nm="v")
         @test occursin("np.array([1, 2, 3])", np)
 
+        joined = LAlatex.L_show((:x, :y); separator=L",\\quad")
+        @test occursin("\\quad", joined)
+
+        expr = (x + y)^2
+        expanded = LAlatex.L_show(expr; symopts=(expand=true,))
+        @test occursin("x^2", expanded) || occursin("x^{2}", expanded)
+
+        symA = [1//2 x; 3//4 y]
+        factor, symA_out = LAlatex.factor_out_denominator(symA)
+        @test factor == 4
+        @test symA_out[1, 1] == 2
+        @test isequal(symA_out[1, 2], 4 * x)
+        @test symA_out[2, 1] == 3
+        @test isequal(symA_out[2, 2], 4 * y)
+
+        symB = LAlatex.mixed_matrix((1//2, x), ((1 + im)//3, y))
+        factorB, symB_out = LAlatex.factor_out_denominator(symB)
+        @test factorB == 6
+        @test symB_out[1, 1] == 3
+        @test isequal(symB_out[1, 2], 6 * x)
+        @test symB_out[2, 1] == 2 + 2im
+        @test isequal(symB_out[2, 2], 6 * y)
+
+        symC = LAlatex.mixed_matrix((x / 2, 1//3), (x, y))
+        factorC, symC_out = LAlatex.factor_out_denominator(symC)
+        @test factorC == 6
+        @test isequal(symC_out[1, 1], 3 * x)
+        @test symC_out[1, 2] == 2
+
         if ok
             LAlatex.set_backend!(:sympy)
             a_py, b_py = LAlatex.syms(:a, :b)
             latex_py = LAlatex.L_show(a_py, " + ", b_py)
             @test occursin("a", latex_py)
             @test occursin("b", latex_py)
+
+            expr_py = (a_py + b_py)^2
+            expanded_py = LAlatex.L_show(expr_py; symopts=(expand=true,))
+            @test occursin("a", expanded_py)
+            @test occursin("b", expanded_py)
+
+            sympy = LAlatex.import_sympy()
+            f_py = LAlatex.mixed_matrix((sympy.Rational(1, 2), a_py), (sympy.Rational(1, 3), b_py))
+            factor_py, out_py = LAlatex.factor_out_denominator(f_py)
+            @test factor_py == 6
+            @test PythonCall.pyconvert(Int, out_py[1, 1]) == 3
+            @test PythonCall.pyconvert(Int, out_py[2, 1]) == 2
+            @test LAlatex.to_latex(out_py[1, 2]) == LAlatex.to_latex(6 * a_py)
+            @test LAlatex.to_latex(out_py[2, 2]) == LAlatex.to_latex(6 * b_py)
         end
     end
 end

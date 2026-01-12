@@ -97,10 +97,269 @@ end
 """
     factor_out_denominator(A::AbstractArray) -> (factor, A_factored)
 
-Fallback for arrays without rational entries.
+Factor out the least common denominator for rational entries in mixed arrays.
+Symbols and non-rational numeric entries are scaled by the factor; unsupported
+entries return the original array with factor 1.
 """
 function factor_out_denominator(A::AbstractArray)
-    return 1, A
+    denominators = Int[]
+    collect_symbolics_denoms = function(x; include_integers=false)
+        local function push_literal_denominator(val; include_integers_local=false)
+            if val isa Rational
+                push!(denominators, denominator(val))
+            elseif include_integers_local && val isa Integer
+                push!(denominators, Int(val))
+            elseif val isa Complex{Rational{Int}}
+                push!(denominators, denominator(real(val)))
+                push!(denominators, denominator(imag(val)))
+            end
+        end
+        local function walk(expr; include_integers_local=false)
+            if expr isa Symbolics.Num
+                return walk(Symbolics.unwrap(expr); include_integers_local=include_integers_local)
+            end
+
+            if Symbolics.SymbolicUtils.isadd(expr)
+                for coeff in symbolic_term_coefficients(expr)
+                    if coeff isa Symbolics.Num && Symbolics.SymbolicUtils.is_literal_number(coeff)
+                        coeff = Symbolics.SymbolicUtils.unwrap_const(coeff)
+                    end
+                    push_literal_denominator(coeff; include_integers_local=include_integers_local)
+                end
+            end
+
+            if Symbolics.SymbolicUtils.isdiv(expr)
+                if hasfield(typeof(expr), :num) && hasfield(typeof(expr), :den)
+                    walk(getfield(expr, :num); include_integers_local=false)
+                    walk(getfield(expr, :den); include_integers_local=true)
+                end
+                return
+            end
+
+            if Symbolics.SymbolicUtils.is_literal_number(expr)
+                val = Symbolics.SymbolicUtils.unwrap_const(expr)
+                push_literal_denominator(val; include_integers_local=include_integers_local)
+                return
+            end
+
+            if hasfield(typeof(expr), :coeff)
+                coeff = getfield(expr, :coeff)
+                if coeff isa Symbolics.Num && Symbolics.SymbolicUtils.is_literal_number(coeff)
+                    coeff = Symbolics.SymbolicUtils.unwrap_const(coeff)
+                end
+                push_literal_denominator(coeff; include_integers_local=include_integers_local)
+            end
+
+            if hasfield(typeof(expr), :dict)
+                dict = getfield(expr, :dict)
+                try
+                    for (k, v) in dict
+                        walk(k; include_integers_local=include_integers_local)
+                        walk(v; include_integers_local=include_integers_local)
+                    end
+                catch
+                    # ignore non-iterable dict-like structures
+                end
+            end
+
+            ok, rat = Symbolics.SymbolicUtils.ratcoeff(expr)
+            if ok
+                if rat isa Rational
+                    push!(denominators, denominator(rat))
+                elseif include_integers_local && rat isa Integer
+                    push!(denominators, Int(rat))
+                end
+                return
+            end
+
+            if expr isa Rational{Int}
+                push!(denominators, denominator(expr))
+                return
+            elseif include_integers_local && expr isa Integer
+                push!(denominators, Int(expr))
+                return
+            elseif expr isa Complex{Rational{Int}}
+                push!(denominators, denominator(real(expr)))
+                push!(denominators, denominator(imag(expr)))
+                return
+            elseif expr isa Number
+                return
+            elseif Symbolics.SymbolicUtils.iscall(expr)
+                op = Symbolics.SymbolicUtils.operation(expr)
+                args = Symbolics.SymbolicUtils.arguments(expr)
+                if op === (/) && length(args) >= 2
+                    walk(args[1]; include_integers_local=false)
+                    walk(args[2]; include_integers_local=true)
+                    return
+                end
+                for arg in args
+                    walk(arg; include_integers_local=include_integers_local)
+                end
+            end
+        end
+        walk(x; include_integers_local=include_integers)
+    end
+    for x in A
+        if x isa Rational{Int}
+            push!(denominators, denominator(x))
+        elseif x isa Complex{Rational{Int}}
+            push!(denominators, denominator(real(x)))
+            push!(denominators, denominator(imag(x)))
+        elseif x isa Complex
+            xr = real(x)
+            xi = imag(x)
+            if xr isa Symbolics.Num
+                collect_symbolics_denoms(xr)
+            elseif xr isa PythonCall.Py
+                den = try
+                    sympy = import_sympy()
+                    sympy.denom(xr)
+                catch
+                    nothing
+                end
+                if den !== nothing
+                    den_jl = try
+                        PythonCall.pyconvert(Any, den)
+                    catch
+                        nothing
+                    end
+                    if den_jl isa Integer
+                        push!(denominators, Int(den_jl))
+                    elseif den_jl isa Rational{Int}
+                        push!(denominators, denominator(den_jl))
+                    end
+                end
+            end
+            if xi isa Symbolics.Num
+                collect_symbolics_denoms(xi)
+            elseif xi isa PythonCall.Py
+                den = try
+                    sympy = import_sympy()
+                    sympy.denom(xi)
+                catch
+                    nothing
+                end
+                if den !== nothing
+                    den_jl = try
+                        PythonCall.pyconvert(Any, den)
+                    catch
+                        nothing
+                    end
+                    if den_jl isa Integer
+                        push!(denominators, Int(den_jl))
+                    elseif den_jl isa Rational{Int}
+                        push!(denominators, denominator(den_jl))
+                    end
+                end
+            end
+        elseif x isa Symbolics.Num
+            sf = try
+                Symbolics.simplify_fractions(x)
+            catch
+                nothing
+            end
+            if sf !== nothing
+                den_sf = try
+                    Base.denominator(sf)
+                catch
+                    nothing
+                end
+                if den_sf isa Integer
+                    push!(denominators, Int(den_sf))
+                elseif den_sf isa Rational{Int}
+                    push!(denominators, denominator(den_sf))
+                elseif den_sf isa Symbolics.Num
+                    if Symbolics.SymbolicUtils.is_literal_number(den_sf)
+                        val = Symbolics.SymbolicUtils.unwrap_const(den_sf)
+                        if val isa Integer
+                            push!(denominators, Int(val))
+                        elseif val isa Rational
+                            push!(denominators, denominator(val))
+                        end
+                    else
+                        collect_symbolics_denoms(den_sf; include_integers=true)
+                    end
+                elseif den_sf !== nothing
+                    collect_symbolics_denoms(den_sf; include_integers=true)
+                end
+            end
+            den = try
+                Base.denominator(x)
+            catch
+                nothing
+            end
+            if den isa Integer
+                push!(denominators, Int(den))
+            elseif den isa Rational{Int}
+                push!(denominators, denominator(den))
+            elseif den isa Symbolics.Num
+                if Symbolics.SymbolicUtils.is_literal_number(den)
+                    val = Symbolics.SymbolicUtils.unwrap_const(den)
+                    if val isa Integer
+                        push!(denominators, Int(val))
+                    elseif val isa Rational
+                        push!(denominators, denominator(val))
+                    end
+                else
+                    collect_symbolics_denoms(den; include_integers=true)
+                end
+            elseif den !== nothing
+                collect_symbolics_denoms(den; include_integers=true)
+            end
+            expr = Symbolics.unwrap(x)
+            dens = try
+                Symbolics.SymbolicUtils.denominators(expr)
+            catch
+                Any[]
+            end
+            for d in dens
+                collect_symbolics_denoms(d; include_integers=true)
+            end
+            collect_symbolics_denoms(x)
+        elseif x isa PythonCall.Py
+            den = try
+                sympy = import_sympy()
+                sympy.denom(x)
+            catch
+                nothing
+            end
+            if den !== nothing
+                den_jl = try
+                    PythonCall.pyconvert(Any, den)
+                catch
+                    nothing
+                end
+                if den_jl isa Integer
+                    push!(denominators, Int(den_jl))
+                elseif den_jl isa Rational{Int}
+                    push!(denominators, denominator(den_jl))
+                end
+            end
+        elseif x isa Number || x isa Symbolics.Num
+            # ok
+        else
+            return 1, A
+        end
+    end
+
+    if isempty(denominators)
+        return 1, A
+    end
+
+    d = reduce(lcm, denominators; init=1)
+    d == 1 && return 1, A
+    factored = map(x -> d * x, A)
+    if any(x -> x isa Symbolics.Num || Symbolics.SymbolicUtils.issym(x) || Symbolics.SymbolicUtils.iscall(x), factored)
+        factored = try
+            Symbolics.expand.(factored)
+        catch
+            factored
+        end
+    elseif any(x -> x isa PythonCall.Py, factored)
+        sympy = import_sympy()
+        factored = map(x -> x isa PythonCall.Py ? sympy.expand(x) : x, factored)
+    end
+    return d, factored
 end
 
 """
@@ -204,18 +463,6 @@ function style_wrapper(content::Any, color_opt=nothing)
         return "\\textcolor{$color_opt}{$str_content}"
     end
     return str_content
-end
-
-"""
-    normalize_separator(separator) -> String
-
-Return a LaTeX-safe separator string, removing outer math delimiters when needed.
-"""
-function normalize_separator(separator)
-    if separator isa LaTeXString
-        return to_latex(separator)
-    end
-    return strip(string(separator), ['$', '\n'])
 end
 
 """
@@ -358,8 +605,7 @@ function construct_latex_matrix_body(A, arraystyle, is_block_array, per_element_
         A = map(x -> number_formatter(x), A)
     end
 
-    contains_symbols = any(x -> x isa Symbol || x isa PythonCall.Py || x isa Symbolics.Num, A)
-    factor, intA = contains_symbols ? (1, A) : process_array(A, factor_out)
+    factor, intA = process_array(A, factor_out)
 
     matrix_rows = [format_matrix_row(intA, i, per_element_style, row_dividers) for i in 1:size(A, 1)]
     matrix_body = left_bracket * "\\begin{$matrix_env}$col_format_str\n" *
@@ -377,7 +623,8 @@ Render a matrix-like object as LaTeX.
 """
 function L_show_matrix(A; arraystyle=:parray, is_block_array=false, color=nothing,
                        number_formatter=nothing, per_element_style=nothing,
-                       factor_out=true)
+                       factor_out=true, symopts=NamedTuple())
+    symopts = normalize_symopts(symopts)
     is_transposed = A isa Transpose{<:Any, <:AbstractMatrix} ||
                     A isa Transpose{<:Any, <:BlockArray} ||
                     A isa Transpose{<:Any, <:AbstractVector}
@@ -395,6 +642,10 @@ function L_show_matrix(A; arraystyle=:parray, is_block_array=false, color=nothin
         is_block_array = true
     elseif A isa Diagonal
         A = Matrix(A)
+    end
+
+    if any(x -> x isa Symbolics.Num || x isa PythonCall.Py, A)
+        A = map(x -> symbolic_transform(x; symopts...), A)
     end
 
     latex_output = construct_latex_matrix_body(A, arraystyle, is_block_array, per_element_style,
@@ -449,7 +700,8 @@ Render a single object into a LaTeX fragment without math delimiters.
 """
 function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, separator=", ",
                      number_formatter=nothing, per_element_style=nothing,
-                     factor_out=true)
+                     factor_out=true, symopts=NamedTuple())
+    symopts = normalize_symopts(symopts)
     if obj isa Group
         return L_show_set(obj;
             setstyle=setstyle,
@@ -458,13 +710,14 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
             separator=separator,
             number_formatter=number_formatter,
             per_element_style=per_element_style,
+            symopts=symopts,
         )
     end
 
     if obj isa LinearCombination
         return L_show_lc(obj; setstyle=setstyle, arraystyle=arraystyle, color=color,
                          number_formatter=number_formatter, per_element_style=per_element_style,
-                         factor_out=factor_out)
+                         factor_out=factor_out, symopts=symopts)
     end
 
     if obj isa Tuple && isempty(obj)
@@ -484,6 +737,7 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
             :factor_out => factor_out
         ), formatting_options)
 
+        combined_options[:symopts] = symopts
         formatted_entries = [L_show_core(entry; combined_options...) for entry in content_values]
         separator_str = normalize_separator(combined_options[:separator])
         return join(formatted_entries, separator_str)
@@ -498,6 +752,7 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
             number_formatter=number_formatter,
             per_element_style=per_element_style,
             factor_out=factor_out,
+            symopts=symopts,
         ) for entry in obj]
         separator_str = normalize_separator(separator)
         return join(formatted_entries, separator_str)
@@ -525,13 +780,14 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
                          obj isa BlockMatrix || obj isa Transpose{<:BlockMatrix} || obj isa Adjoint{<:BlockMatrix}
         return L_show_matrix(obj; arraystyle=arraystyle, is_block_array=is_block_array,
                              color=color, number_formatter=number_formatter,
-                             per_element_style=per_element_style, factor_out=factor_out)
+                             per_element_style=per_element_style, factor_out=factor_out,
+                             symopts=symopts)
     end
 
     if obj isa Symbol || obj isa Symbolics.Num
-        return style_wrapper(to_latex(obj) * " ", color)
+        return style_wrapper(to_latex(symbolic_transform(obj; symopts...)) * " ", color)
     elseif obj isa Number || obj isa PythonCall.Py
-        return L_show_number(obj; color=color, number_formatter=number_formatter)
+        return L_show_number(symbolic_transform(obj; symopts...); color=color, number_formatter=number_formatter)
     end
 
     error("Unsupported argument type: $(typeof(obj))")
@@ -543,7 +799,8 @@ end
 Render a `Group` with delimiters and separators.
 """
 function L_show_set(obj_group; setstyle=:Barray, arraystyle=:parray, color=nothing, separator=", ",
-                    number_formatter=nothing, per_element_style=nothing)
+                    number_formatter=nothing, per_element_style=nothing, symopts=NamedTuple())
+    symopts = normalize_symopts(symopts)
     if !(obj_group isa Group)
         error("L_show_set expected a Group, got: $(typeof(obj_group))")
     end
@@ -557,6 +814,7 @@ function L_show_set(obj_group; setstyle=:Barray, arraystyle=:parray, color=nothi
         :separator => separator,
         :number_formatter => number_formatter,
         :per_element_style => per_element_style,
+        :symopts => symopts,
     ), group_options)
 
     clean_separator = normalize_separator(combined_options[:separator])
@@ -568,7 +826,8 @@ function L_show_set(obj_group; setstyle=:Barray, arraystyle=:parray, color=nothi
                                        separator=combined_options[:separator],
                                        number_formatter=combined_options[:number_formatter],
                                        per_element_style=combined_options[:per_element_style],
-                                       factor_out=true),
+                                       factor_out=true,
+                                       symopts=combined_options[:symopts]),
                     obj_group.entries)
 
     joined_latex = obj_latex[1]
@@ -587,7 +846,8 @@ Render a LinearCombination group.
 """
 function L_show_lc(lcobj::LinearCombination; setstyle=:parray, arraystyle=:parray, color=nothing,
                    number_formatter=nothing, per_element_style=nothing,
-                   factor_out=true)
+                   factor_out=true, symopts=NamedTuple())
+    symopts = normalize_symopts(symopts)
     local s = lcobj.s
     local X = lcobj.X
 
@@ -600,7 +860,7 @@ function L_show_lc(lcobj::LinearCombination; setstyle=:parray, arraystyle=:parra
     inner = x -> L_show_core(x;
         arraystyle=arraystyle, color=color,
         number_formatter=number_formatter, per_element_style=per_element_style,
-        factor_out=factor_out)
+        factor_out=factor_out, symopts=symopts)
 
     needs_parens = x -> begin
         t = replace(inner(x), r"\s" => "")
@@ -705,11 +965,13 @@ end
 Render objects into a LaTeX string with optional inline delimiters.
 """
 function L_show(objs...; setstyle=:parray, arraystyle=:parray, separator=", ", color=nothing,
-                number_formatter=nothing, per_element_style=nothing, factor_out=true, inline=true)
+                number_formatter=nothing, per_element_style=nothing, factor_out=true, inline=true,
+                symopts=NamedTuple())
+    symopts = normalize_symopts(symopts)
     formatted_objs = [
         L_show_core(obj; arraystyle=arraystyle, separator=separator, color=color,
                     number_formatter=number_formatter, per_element_style=per_element_style,
-                    factor_out=factor_out)
+                    factor_out=factor_out, symopts=symopts)
         for obj in objs
     ]
 

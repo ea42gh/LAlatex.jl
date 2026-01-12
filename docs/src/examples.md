@@ -70,6 +70,18 @@ show_side_by_side(["left", "right"], ["A", "B"])
 to_latex(3//4)
 ```
 
+## Symbolic display controls
+
+Use `symbolic_transform` directly, or pass `symopts` to `L_show`/`l_show` for display-time transforms.
+
+```julia
+set_backend!(:symbolics)
+x, y = syms(:x, :y)
+expr = (x + y)^2
+
+L_show(expr; symopts=(expand=true,))
+```
+
 ## Formatter helpers
 
 ```julia
@@ -81,6 +93,13 @@ formatted = rowechelon_formatter(1, 2, 4, "x"; pivots=[1, 3])
 ```julia
 L_show(1, " = ", [1 2; 3 4])
 display(l_show(1, " = ", [1 2; 3 4]))
+```
+
+`factor_out_denominator` returns a common denominator and a scaled matrix. Symbolic entries are expanded elementwise after scaling:
+
+```julia
+den, scaled = factor_out_denominator(F^2)
+display(l_show(scaled))
 ```
 
 ## Array styles

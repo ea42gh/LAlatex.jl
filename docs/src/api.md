@@ -24,6 +24,20 @@ otherwise Julia may throw an ambiguous `promote_rule` error when constructing a 
 ## LaTeX helpers
 
 - `to_latex`
+- `symbolic_transform` (Symbolics/SymPy display transforms)
+
+### symbolic_transform options
+
+`symbolic_transform(x; kwargs...)` and `L_show(...; symopts=kwargs)` accept:
+
+| Option | Values | Notes |
+| --- | --- | --- |
+| `simplify` | `true`/`false` | Apply backend simplification. |
+| `expand` | `true`/`false` | Expand algebraic products. |
+| `factor` | `true`/`false` | Factor algebraic expressions. |
+| `collect` | `Symbolics.Num`/`PythonCall.Py`/`nothing` | Collect terms with respect to a variable. |
+
+Use `symopts=(; factor=true)` or `symopts=(factor=true,)` to build a `NamedTuple`.
 
 ## Formatter helpers
 
@@ -44,3 +58,5 @@ otherwise Julia may throw an ambiguous `promote_rule` error when constructing a 
 - `L_interp`
 - `apply_function`, `round_value`, `round_matrices`
 - `print_np_array_def`
+- `L_show(...; symopts=...)` for optional Symbolics/SymPy transforms
+- `factor_out_denominator` (returns `(den, scaled)` and expands symbolic entries elementwise)

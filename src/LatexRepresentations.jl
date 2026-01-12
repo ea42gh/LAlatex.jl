@@ -29,17 +29,15 @@ fix_num_symbol_mul(s::AbstractString) = replace(String(s),
 Convert a Julia object to a LaTeX string, with optional number formatting.
 """
 function to_latex(x::LaTeXString; number_formatter=nothing)
-    return strip(string(x), ['$', '\n'])
+    return strip_math_delims(string(x))
 end
 
 function to_latex(x::String; number_formatter=nothing)
-    stripped = strip(x)
-    if startswith(stripped, "\\") ||
-       all(c -> isdigit(c) || c in (' ', '=', '+', '-', '*', '/', '(', ')', '^', '.', ','), stripped)
-        return stripped
+    if looks_like_math(x)
+        return strip_math_delims(x)
     end
-    sanitized_str = replace(x, "_" => "\\_", "\$" => "\\\$")
-    return "\\text{" * sanitized_str * "}"
+    sanitized = sanitize_text(x)
+    return "\\text{" * sanitized * "}"
 end
 
 function to_latex(x::Char; number_formatter=nothing)
@@ -59,22 +57,36 @@ end
 function to_latex(x::Complex{T}; number_formatter=nothing) where T
     x_real = real(x)
     x_imag = imag(x)
+    real_numeric = x_real isa Number && !(x_real isa Symbolics.Num)
+    imag_numeric = x_imag isa Number && !(x_imag isa Symbolics.Num)
 
-    if x_imag == 0
+    if imag_numeric && x_imag == 0
         return to_latex(x_real, number_formatter=number_formatter)
-    elseif x_real == 0
-        if x_imag == 1
+    elseif real_numeric && x_real == 0
+        if imag_numeric && x_imag == 1
             return "\\mathit{i}"
-        elseif x_imag == -1
+        elseif imag_numeric && x_imag == -1
             return "-\\mathit{i}"
         else
             return to_latex(x_imag, number_formatter=number_formatter) * "\\mathit{i}"
         end
     else
         xr = to_latex(x_real; number_formatter=number_formatter)
-        sgn = x_imag < 0 ? "-" : "+"
-        axi = abs(x_imag)
-        xi = (axi == 1 ? "" : to_latex(axi; number_formatter=number_formatter)) * "\\mathit{i}"
+        sgn = "+"
+        coeff = ""
+        if imag_numeric
+            sgn = x_imag < 0 ? "-" : "+"
+            axi = abs(x_imag)
+            coeff = (axi == 1 ? "" : to_latex(axi; number_formatter=number_formatter))
+        else
+            imag_str = strip(to_latex(x_imag; number_formatter=number_formatter))
+            if startswith(imag_str, "-")
+                sgn = "-"
+                imag_str = strip(imag_str[2:end])
+            end
+            coeff = imag_str == "1" ? "" : imag_str
+        end
+        xi = coeff * "\\mathit{i}"
         return xr * sgn * xi
     end
 end
@@ -96,10 +108,8 @@ function to_latex(x::Symbol; number_formatter=nothing)
 end
 
 function to_latex(x::Symbolics.Num; number_formatter=nothing)
-    s = strip(string(latexify(Symbolics.simplify(x))), ['$', '\n', ' '])
-    s = replace(s, r"^\\begin\{equation\}\s*" => "", r"\s*\\end\{equation\}\s*$" => "")
-    s = replace(s, r"\\mathtt\{([^}]*)\}" => s"\1")
-    s = replace(s, "\\_" => "_")
+    s = string(latexify(Symbolics.simplify(x)))
+    s = normalize_symbolics_latex(s)
     return isempty(s) ? string(x) : s
 end
 
@@ -117,7 +127,7 @@ function to_latex(x; number_formatter=nothing)
         return s
     end
 
-    s = strip(latexify(x), ['$', '\n'])
+    s = strip_math_delims(latexify(x))
     return isempty(s) ? string(x) : s
 end
 
