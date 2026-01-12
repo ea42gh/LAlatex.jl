@@ -2,6 +2,11 @@ using PythonCall
 
 const _sympy = Ref{Any}(nothing)
 # ---------------------------------------------------------------------------------------------
+"""
+    _python_exe_hint() -> Union{String,Nothing}
+
+Return the Python executable used by PythonCall, when available.
+"""
 function _python_exe_hint()
     # PythonCall exposes the Python executable via its runtime; keep robust.
     # If this fails for some future API change, we still emit the base guidance.

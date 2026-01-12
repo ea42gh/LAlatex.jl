@@ -5,11 +5,22 @@ using Symbolics
 include("backend.jl")
 include("symbolics_backend.jl")
 include("import_sympy.jl")
+include("Formatters.jl")
+include("MatrixUtils.jl")
 
 using .Backend
-using .SymbolicsBackendImpl: syms_symbolics
+using .SymbolicsBackendImpl: syms_symbolics, assume_symbolics!, symbolics_assumptions
 
-export @syms, syms, syms_sympy, @syms_sympy, import_sympy, get_backend, set_backend!
+export @syms, syms, syms_sympy, @syms_sympy, import_sympy, get_backend, set_backend!, assume!, assumptions
+export to_html, show_html, pr, capture_output, show_side_by_side_html, show_side_by_side
+export bold_formatter, italic_formatter, color_formatter, conditional_color_formatter
+export highlight_large_values, underline_formatter, overline_formatter, combine_formatters
+export scientific_formatter, percentage_formatter, exponential_formatter
+export tril_formatter, block_formatter, diagonal_blocks_formatter, echelon_pivot_formatter
+export to_latex
+export mixed_matrix, @mixed_matrix
+export L_show, l_show, py_show, set, lc
+export L_interp, apply_function, round_value, round_matrices, print_np_array_def
 
 """
     get_backend() -> BackendTag
@@ -21,11 +32,44 @@ get_backend() = Backend.get_backend()
 """
     set_backend!(backend)
 
-Set the default backend for this session. Supported tags:
-- `Backend.SymbolicsBackend()`
-- `Backend.SymPyBackend()`
+Set the default backend for this session. Supported values:
+- `Backend.SymbolicsBackend()` or `:symbolics`
+- `Backend.SymPyBackend()` or `:sympy`
 """
 set_backend!(b::Backend.BackendTag) = Backend.set_backend!(b)
+function set_backend!(backend::Symbol)
+    if backend === :symbolics
+        return set_backend!(Backend.SymbolicsBackend())
+    elseif backend === :sympy
+        return set_backend!(Backend.SymPyBackend())
+    else
+        throw(ArgumentError("Unknown backend: $backend (expected :symbolics or :sympy)"))
+    end
+end
+
+"""
+    assume!(var; kwargs...) -> var
+
+Attach assumptions to a Symbolics variable. Assumptions are stored as metadata for LAlatex.
+"""
+function assume!(var; kwargs...)
+    if var isa Symbolics.Num
+        return assume_symbolics!(var; kwargs...)
+    end
+    throw(ArgumentError("assume! expects a Symbolics variable; use SymPy assumptions with SymPy backend."))
+end
+
+"""
+    assumptions(var) -> Dict{Symbol,Any}
+
+Return stored assumptions for a Symbolics variable, or an empty dict if none are recorded.
+"""
+function assumptions(var)
+    if var isa Symbolics.Num
+        return symbolics_assumptions(var)
+    end
+    return Dict{Symbol, Any}()
+end
 
 """
     syms(names...; backend=:default, kwargs...)
@@ -39,8 +83,7 @@ or `syms_sympy` when you want SymPy symbols instead.
 - `backend=:sympy` returns SymPy symbols via PythonCall (`PythonCall.Py`)
 
 Notes:
-- Symbolics does not accept SymPy-style assumption keywords (e.g., `real=true`); this function errors
-  if you pass keyword arguments with the Symbolics backend.
+- Symbolics assumptions passed as keywords are stored as metadata for LAlatex formatting and display.
 """
 function syms(names...; backend::Symbol = :default, kwargs...)
     if backend === :default

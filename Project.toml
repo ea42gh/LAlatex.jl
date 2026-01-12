@@ -4,11 +4,25 @@ version = "1.0.0-DEV"
 authors = ["ea42_github@mail.com"]
 
 [deps]
+IOCapture = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
+BlockArrays = "8e7c35d0-a365-5155-bbbb-fb81a777f24e"
+LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
+Latexify = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
+LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
+Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
+SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [compat]
+IOCapture = "0.2.5"
+BlockArrays = "1.4.0"
+LaTeXStrings = "1.4.0"
+Latexify = "0.16.10"
 PythonCall = "0.9.31"
+Revise = "3.13.1"
+SymPy = "2.3.3"
 Symbolics = "7.5.0"
 julia = "1.10.10"
 
