@@ -33,6 +33,11 @@ function to_latex(x::LaTeXString; number_formatter=nothing)
 end
 
 function to_latex(x::String; number_formatter=nothing)
+    stripped = strip(x)
+    if startswith(stripped, "\\") ||
+       all(c -> isdigit(c) || c in (' ', '=', '+', '-', '*', '/', '(', ')', '^', '.', ','), stripped)
+        return stripped
+    end
     sanitized_str = replace(x, "_" => "\\_", "\$" => "\\\$")
     return "\\text{" * sanitized_str * "}"
 end
@@ -93,6 +98,8 @@ end
 function to_latex(x::Symbolics.Num; number_formatter=nothing)
     s = strip(string(latexify(Symbolics.simplify(x))), ['$', '\n', ' '])
     s = replace(s, r"^\\begin\{equation\}\s*" => "", r"\s*\\end\{equation\}\s*$" => "")
+    s = replace(s, r"\\mathtt\{([^}]*)\}" => s"\1")
+    s = replace(s, "\\_" => "_")
     return isempty(s) ? string(x) : s
 end
 

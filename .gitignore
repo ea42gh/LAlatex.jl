@@ -5,6 +5,7 @@
 *.dll
 *.o
 *.a
+.julia_depot
 
 # Local environments / manifests
 Manifest.toml

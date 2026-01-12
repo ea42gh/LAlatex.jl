@@ -73,7 +73,7 @@ to_latex(3//4)
 ## Formatter helpers
 
 ```julia
-formatted = echelon_pivot_formatter(1, 2, 4, "x"; pivots=[1, 3])
+formatted = rowechelon_formatter(1, 2, 4, "x"; pivots=[1, 3])
 ```
 
 ## LaTeX display helpers
@@ -82,6 +82,23 @@ formatted = echelon_pivot_formatter(1, 2, 4, "x"; pivots=[1, 3])
 L_show(1, " = ", [1 2; 3 4])
 display(l_show(1, " = ", [1 2; 3 4]))
 ```
+
+## Array styles
+
+Use `arraystyle` to select the LaTeX environment and delimiters:
+
+| Style | Output |
+| --- | --- |
+| `:parray` | `\\left(\\begin{array} ... \\end{array}\\right)` |
+| `:barray` | `\\left[\\begin{array} ... \\end{array}\\right]` |
+| `:Barray` | `\\left\\{\\begin{array} ... \\end{array}\\right\\}` |
+| `:Varray` | `\\left\\Vert\\begin{array} ... \\end{array}\\right\\Vert` |
+| `:varray` | `\\left\\vert\\begin{array} ... \\end{array}\\right\\vert` |
+| `:pmatrix` | `\\begin{pmatrix} ... \\end{pmatrix}` |
+| `:bmatrix` | `\\begin{bmatrix} ... \\end{bmatrix}` |
+| `:Bmatrix` | `\\begin{Bmatrix} ... \\end{Bmatrix}` |
+| `:vmatrix` | `\\begin{vmatrix} ... \\end{vmatrix}` |
+| `:Vmatrix` | `\\begin{Vmatrix} ... \\end{Vmatrix}` |
 
 ## Utility helpers
 

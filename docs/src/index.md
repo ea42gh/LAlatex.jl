@@ -8,6 +8,13 @@ Documentation for [LAlatex](https://github.com/ea42gh/LAlatex.jl).
 
 See the Examples page for backend switching, assumptions, HTML helpers, and LaTeX helpers.
 
+## Troubleshooting
+
+- **SymPy import fails**: Ensure `sympy` is installed in the Python used by PythonCall. Check with `PythonCall.pyimport("sys").executable`.
+- **Symbolics + complex rationals**: Use `mixed_matrix` or `@mixed_matrix` when mixing Symbolics/SymPy symbols with complex rationals to avoid ambiguous `promote_rule` errors.
+- **Math font vs text font**: Use `L"..."`/`LaTeXString` for math; plain strings are wrapped in `\\text{...}` by `L_show`.
+- **SymPy tests skipped**: Set `JULIA_PYTHONCALL_EXE` to a Python that has SymPy installed.
+
 ## Documentation notebooks
 
 - `docs/src/notebooks/LAlatex_basics.ipynb`: project setup, backend switching, assumptions, HTML helpers, and formatters.

@@ -39,7 +39,9 @@ if pyexe !== nothing
 end
 
 @testset "LAlatex" begin
+    LAlatex.set_backend!(:symbolics)
     @testset "Symbolics default" begin
+        LAlatex.set_backend!(:symbolics)
         @test LAlatex.get_backend() isa LAlatex.Backend.SymbolicsBackend
 
         x = LAlatex.syms(:x)
@@ -68,6 +70,7 @@ end
 
     if ok
         @testset "SymPy integration" begin
+            LAlatex.set_backend!(:sympy)
             xs = LAlatex.syms_sympy(:x)
             ys = LAlatex.syms_sympy(:y; real=true, positive=true)
             @test string(xs) == "x"
@@ -83,7 +86,7 @@ end
             @test string(s) == "s"
             @test Bool(sympy.ask(sympy.Q.real(s)))
 
-            LAlatex.set_backend!(LAlatex.Backend.SymbolicsBackend())
+            LAlatex.set_backend!(:symbolics)
             LAlatex.@syms t
             @test t isa Symbolics.Num
         end
@@ -92,6 +95,7 @@ end
     end
 
     @testset "HTML helpers" begin
+        LAlatex.set_backend!(:symbolics)
         html = LAlatex.to_html("hello"; sz=18, color="blue", justify="center", height=20, width=80, env="em")
         @test occursin("hello", html)
         @test occursin("font-size: 18px", html)
@@ -133,6 +137,7 @@ end
     end
 
     @testset "LaTeX helpers" begin
+        LAlatex.set_backend!(:symbolics)
         @test LAlatex.to_latex("a_b") == "\\text{a\\_b}"
         @test LAlatex.to_latex('x') == "\\text{x}"
         @test LAlatex.to_latex(3//4) == "\\frac{3}{4}"
@@ -150,9 +155,16 @@ end
             latex_sp = LAlatex.to_latex(sp)
             @test occursin("sp", latex_sp)
         end
+
+        LAlatex.set_backend!(:symbolics)
+        alpha = LAlatex.syms("α_1")
+        latex_alpha = LAlatex.to_latex(alpha)
+        @test occursin("\\alpha", latex_alpha) || occursin("α", latex_alpha)
+        @test occursin("_1", latex_alpha)
     end
 
     @testset "Formatters" begin
+        LAlatex.set_backend!(:symbolics)
         @test LAlatex.bold_formatter(1, 1, 1, "x") == "\\boldsymbol{x}"
         @test LAlatex.italic_formatter(1, 1, 1, "x") == "\\mathit{x}"
         @test LAlatex.color_formatter(1, 1, 1, "x"; color="blue") == "\\textcolor{blue}{x}"
@@ -182,13 +194,14 @@ end
         @test LAlatex.diagonal_blocks_formatter(1, 4, 4, "x"; blocks=blocks, colors=colors) == "\\textcolor{red}{x}"
 
         pivots = [1, 3]
-        @test LAlatex.echelon_pivot_formatter(1, 1, 1, "x"; pivots=pivots) == "\\textcolor{red}{\\boldsymbol{x}}"
-        @test LAlatex.echelon_pivot_formatter(1, 1, 2, "x"; pivots=pivots) == "\\textcolor{red}{\\boldsymbol{x}}"
-        @test LAlatex.echelon_pivot_formatter(1, 2, 2, "x"; pivots=pivots) == "x"
-        @test LAlatex.echelon_pivot_formatter(1, 2, 3, "x"; pivots=pivots) == "\\textcolor{red}{\\boldsymbol{x}}"
+        @test LAlatex.rowechelon_formatter(1, 1, 1, "x"; pivots=pivots) == "\\textcolor{red}{\\boldsymbol{x}}"
+        @test LAlatex.rowechelon_formatter(1, 1, 2, "x"; pivots=pivots) == "\\textcolor{red}{\\boldsymbol{x}}"
+        @test LAlatex.rowechelon_formatter(1, 2, 2, "x"; pivots=pivots) == "x"
+        @test LAlatex.rowechelon_formatter(1, 2, 3, "x"; pivots=pivots) == "\\textcolor{red}{\\boldsymbol{x}}"
     end
 
     @testset "L_show helpers" begin
+        LAlatex.set_backend!(:symbolics)
         template = LaTeXString("\\mathbb{R}^{" * "\$(n)" * "}")
         tpl = LAlatex.L_interp(template, Dict("n" => 3))
         @test occursin("\\mathbb{R}^{3}", string(tpl))
@@ -202,11 +215,11 @@ end
 
         mixed = LAlatex.mixed_matrix((1//2, x), ((1 + im)//3, 2*y))
         @test size(mixed) == (2, 2)
-        @test mixed[1, 2] == x
-        @test mixed[2, 1] == (1 + im)//3
+        @test isequal(mixed[1, 2], x)
+        @test isequal(mixed[2, 1], (1 + im)//3)
         mixed_literal = LAlatex.@mixed_matrix [1//2 x; (1 + im)//3 2*y]
         @test mixed_literal[1, 1] == 1//2
-        @test mixed_literal[2, 2] == 2*y
+        @test isequal(mixed_literal[2, 2], 2*y)
 
         mats = [[reshape(1:4, 2, 2), :none], [nothing, reshape(5:8, 2, 2)]]
         rounded = LAlatex.round_matrices(mats; digits=0)
@@ -215,5 +228,13 @@ end
 
         np = LAlatex.print_np_array_def([1, 2, 3]; nm="v")
         @test occursin("np.array([1, 2, 3])", np)
+
+        if ok
+            LAlatex.set_backend!(:sympy)
+            a_py, b_py = LAlatex.syms(:a, :b)
+            latex_py = LAlatex.L_show(a_py, " + ", b_py)
+            @test occursin("a", latex_py)
+            @test occursin("b", latex_py)
+        end
     end
 end

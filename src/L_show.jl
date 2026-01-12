@@ -603,8 +603,19 @@ function L_show_lc(lcobj::LinearCombination; setstyle=:parray, arraystyle=:parra
         factor_out=factor_out)
 
     needs_parens = x -> begin
-        t = inner(x)
-        occursin(r"\\+", t) || occursin(r"(?<!^)-", t)
+        t = replace(inner(x), r"\s" => "")
+        if isempty(t)
+            return false
+        end
+        i = nextind(t, firstindex(t))
+        while i <= lastindex(t)
+            c = t[i]
+            if c == '+' || c == '-'
+                return true
+            end
+            i = nextind(t, i)
+        end
+        return false
     end
 
     n = X isa AbstractMatrix ? size(X, 2) : length(X)

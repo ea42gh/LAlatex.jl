@@ -12,7 +12,6 @@ LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"
 Revise = "295af30f-e4ad-537b-8983-00126c2a3abe"
 SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
-SymPy = "24249f21-da20-56a4-8eb1-6a02cf4ae2e6"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [compat]
@@ -22,7 +21,6 @@ LaTeXStrings = "1.4.0"
 Latexify = "0.16.10"
 PythonCall = "0.9.31"
 Revise = "3.13.1"
-SymPy = "2.3.3"
 Symbolics = "7.5.0"
 julia = "1.10.10"
 

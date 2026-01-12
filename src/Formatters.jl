@@ -16,4 +16,4 @@ export bold_formatter,
     tril_formatter,
     block_formatter,
     diagonal_blocks_formatter,
-    echelon_pivot_formatter
+    rowechelon_formatter

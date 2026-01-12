@@ -73,18 +73,18 @@ function diagonal_blocks_formatter(x, i, j, formatted_x;
 end
 
 """
-    echelon_pivot_formatter(x, i, j, formatted_x;
-                            pivots::AbstractVector{<:Integer},
-                            color::String="red") -> String
+    rowechelon_formatter(x, i, j, formatted_x;
+                         pivots::AbstractVector{<:Integer},
+                         color::String="red") -> String
 
 Highlight pivot entries and all entries to the right on pivot rows for row-echelon displays.
 
 `pivots[k]` is the pivot column for row `k`. Use `0` or a negative value to indicate
 that a row has no pivot.
 """
-function echelon_pivot_formatter(x, i, j, formatted_x;
-                                 pivots::AbstractVector{<:Integer},
-                                 color::String = "red")
+function rowechelon_formatter(x, i, j, formatted_x;
+                              pivots::AbstractVector{<:Integer},
+                              color::String = "red")
     if 1 <= i <= length(pivots)
         pivot_col = pivots[i]
         if pivot_col > 0 && j >= pivot_col

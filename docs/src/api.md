@@ -33,7 +33,7 @@ otherwise Julia may throw an ambiguous `promote_rule` error when constructing a 
 - `combine_formatters`
 - `scientific_formatter`, `percentage_formatter`, `exponential_formatter`
 - `tril_formatter`, `block_formatter`, `diagonal_blocks_formatter`
-- `echelon_pivot_formatter`
+- `rowechelon_formatter`
 
 ## LaTeX display helpers
 

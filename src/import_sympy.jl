@@ -63,7 +63,9 @@ x, y = syms_sympy(:x, :y; real=true)
 function syms_sympy(names...; kwargs...)
     sympy = import_sympy()
     strnames = map(n -> n isa Symbol ? String(n) : String(n), names)
-    return sympy.symbols(strnames...; kwargs...)
+    isempty(strnames) && throw(ArgumentError("syms_sympy expects at least one name"))
+    joined = length(strnames) == 1 ? strnames[1] : join(strnames, " ")
+    return sympy.symbols(joined; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------
