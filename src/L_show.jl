@@ -53,6 +53,15 @@ function round_matrices(matrices; digits=0)
 end
 
 """
+    round_matrices(matrices, digits::Int) -> Vector
+
+Positional `digits` overload for rounding nested matrix collections.
+"""
+function round_matrices(matrices, digits::Int)
+    return round_matrices(matrices; digits=digits)
+end
+
+"""
     print_np_array_def(A; nm="A") -> String
 
 Return a NumPy array definition string for display or copy/paste.
