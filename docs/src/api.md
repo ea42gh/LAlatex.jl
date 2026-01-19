@@ -60,3 +60,16 @@ Use `symopts=(; factor=true)` or `symopts=(factor=true,)` to build a `NamedTuple
 - `print_np_array_def`
 - `L_show(...; symopts=...)` for optional Symbolics/SymPy transforms
 - `factor_out_denominator` (returns `(den, scaled)` and expands symbolic entries elementwise)
+
+
+## Internal API coverage
+
+```@docs
+LAlatex.Backend
+LAlatex.Backend.get_backend
+LAlatex.Backend.set_backend!
+LAlatex.Backend.backend_available
+LAlatex.SymbolicsBackendImpl.syms_symbolics
+LAlatex.SymbolicsBackendImpl.assume_symbolics!
+LAlatex.SymbolicsBackendImpl.symbolics_assumptions
+```

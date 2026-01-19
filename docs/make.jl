@@ -14,6 +14,10 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Quickstart" => "quickstart.md",
+        "Python interop" => "python-interop.md",
+        "Compatibility" => "compatibility.md",
+        "FAQ" => "faq.md",
         "Examples" => "examples.md",
         "API" => "api.md",
     ],

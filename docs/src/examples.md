@@ -129,6 +129,11 @@ print_np_array_def([1, 2, 3]; nm="v")
 ## Notebook
 
 See the notebooks in `docs/src/notebooks/` for runnable walkthroughs:
+- `docs/src/quickstart.md`
+- `docs/src/python-interop.md`
+- `docs/src/faq.md`
+- `docs/src/compatibility.md`
 - `docs/src/notebooks/LAlatex_basics.ipynb`
 - `docs/src/notebooks/LAlatex_L_show_Guide.ipynb`
 - `docs/src/notebooks/LAlatex_HTML_Utilities.ipynb`
+- `docs/src/notebooks/LAlatex_from_Python.ipynb`
