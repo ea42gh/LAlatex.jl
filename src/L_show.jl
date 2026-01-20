@@ -861,7 +861,7 @@ function L_show_lc(lcobj::LinearCombination; setstyle=:parray, arraystyle=:parra
     local X = lcobj.X
 
     opts = merge(Dict(
-        :sign_policy=>:plus, :plus=>L" + ", :pos=>L" + ", :neg=>L" - ",
+        :sign_policy=>:signed, :plus=>L" + ", :pos=>L" + ", :neg=>L" - ",
         :parens_coeff=>true, :omit_one=>true, :drop_zero=>true),
         Dict(pairs(lcobj.options))
     )
