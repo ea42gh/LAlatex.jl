@@ -21,7 +21,7 @@ export scientific_formatter, percentage_formatter, exponential_formatter
 export tril_formatter, block_formatter, diagonal_blocks_formatter, rowechelon_formatter
 export to_latex
 export mixed_matrix, @mixed_matrix
-export L_show, l_show, py_show, set, lc
+export L_show, l_show, set, lc
 export L_interp, apply_function, round_value, round_matrices, print_np_array_def, factor_out_denominator
 export symbolic_transform
 export symbolic_term_coefficients

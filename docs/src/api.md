@@ -53,7 +53,6 @@ Use `symopts=(; factor=true)` or `symopts=(factor=true,)` to build a `NamedTuple
 
 - `L_show`
 - `l_show`
-- `py_show`
 - `set`, `lc`
 - `L_interp`
 - `apply_function`, `round_value`, `round_matrices`

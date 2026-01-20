@@ -1011,15 +1011,3 @@ function l_show(args...; kwargs...)
     return LaTeXString(L_show(args...; kwargs...))
 end
 
-"""
-    py_show(args...; kwargs...) -> Nothing
-
-Display LaTeX directly in a Python notebook via IPython.display.
-"""
-function py_show(args...; kwargs...)
-    py_display = pyimport("IPython.display").display
-    py_latex = pyimport("IPython.display").Latex
-    latex_string = L_show(args...; kwargs...)
-    py_display(py_latex(latex_string))
-    return nothing
-end
