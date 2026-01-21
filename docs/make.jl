@@ -1,3 +1,8 @@
+using Pkg
+
+Pkg.develop(path=joinpath(@__DIR__, ".."))
+Pkg.instantiate()
+
 using LAlatex
 using Documenter
 

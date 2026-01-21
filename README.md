@@ -55,6 +55,32 @@ eig_table = BlockArray([eigvals'; eigvecs], [1,2], [2])
 l_show("eig = ", eig_table; arraystyle=:barray)
 ```
 
+Rendered output (LaTeX strings):
+
+```text
+$\text{A = } \left(\begin{array}{rrr}
+1 & 2 & 3 \\
+4 & 5 & 6 \\
+\end{array}\right)$
+```
+
+```text
+$\text{Q R = } \left[\begin{array}{rr|rr}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\ \hline
+0 & 0 & 2 & 1 \\
+0 & 0 & 0 & 3 \\
+\end{array}\right]$
+```
+
+```text
+$\text{eig = } \left[\begin{array}{rr}
+2 & -1 \\ \hline
+1 & 0 \\
+0 & 1 \\
+\end{array}\right]$
+```
+
 ## Backends (Symbolics and SymPy)
 
 `syms` and `LAlatex.@syms` create symbols using the currently selected backend. The default backend is Symbolics.

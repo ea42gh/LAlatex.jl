@@ -95,6 +95,32 @@ L_show(1, " = ", [1 2; 3 4])
 display(l_show(1, " = ", [1 2; 3 4]))
 ```
 
+Rendered output (LaTeX strings):
+
+```text
+$\text{A = } \left(\begin{array}{rrr}
+1 & 2 & 3 \\
+4 & 5 & 6 \\
+\end{array}\right)$
+```
+
+```text
+$\text{Q R = } \left[\begin{array}{rr|rr}
+1 & 0 & 0 & 0 \\
+0 & 1 & 0 & 0 \\ \hline
+0 & 0 & 2 & 1 \\
+0 & 0 & 0 & 3 \\
+\end{array}\right]$
+```
+
+```text
+$\text{eig = } \left[\begin{array}{rr}
+2 & -1 \\ \hline
+1 & 0 \\
+0 & 1 \\
+\end{array}\right]$
+```
+
 `factor_out_denominator` returns a common denominator and a scaled matrix. Symbolic entries are expanded elementwise after scaling:
 
 ```julia
