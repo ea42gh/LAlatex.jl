@@ -163,3 +163,12 @@ See the notebooks in `docs/src/notebooks/` for runnable walkthroughs:
 - `docs/src/notebooks/LAlatex_L_show_Guide.ipynb`
 - `docs/src/notebooks/LAlatex_HTML_Utilities.ipynb`
 - `docs/src/notebooks/LAlatex_from_Python.ipynb`
+
+## Examples directory
+
+Small runnable scripts live in `examples/`:
+
+- `examples/matrix_basic.jl`
+- `examples/qr_layout.jl`
+- `examples/eigen_table.jl`
+- `examples/python_interop.py`

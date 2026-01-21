@@ -4,9 +4,22 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://ea42gh.github.io/LAlatex.jl/dev/)
 [![Build Status](https://github.com/ea42gh/LAlatex.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/ea42gh/LAlatex.jl/actions/workflows/CI.yml?query=branch%3Amain)
 
+Why LAlatex?
+- It keeps linear algebra notation consistent across lectures, notes, and notebooks.
+- It renders mixed text+math without hand-written LaTeX.
+- It supports block structure and symbolic backends out of the box.
+
+Gallery (rendered output):
+
+| Matrix | QR block layout | Eigen table |
+| --- | --- | --- |
+| ![Matrix example](assets/matrix.svg) | ![QR layout](assets/qr_layout.svg) | ![Eigen table](assets/eig_table.svg) |
+
 LAlatex turns Julia objects into compact, readable LaTeX. It is designed for
 teaching and visualization: matrices, block matrices, linear combinations,
 symbolic expressions, and mixed text+math all render with consistent styling.
+If you teach linear algebra or build math-heavy notebooks, this keeps your
+notation consistent without hand-writing LaTeX.
 
 Highlights:
 - `L_show(...)` returns a LaTeX string ready for Markdown, Documenter, or PDF.
@@ -22,6 +35,14 @@ using LAlatex
 A = [1 2; 3 4]
 println(L_show("A = ", A))
 l_show("A = ", A)
+```
+
+Python interop:
+
+```python
+from juliacall import Main as jl
+jl.seval("using LAlatex")
+print(jl.LAlatex.L_show("A = ", [[1, 2], [3, 4]]))
 ```
 
 Linear combinations and mixed text/math:
@@ -80,6 +101,13 @@ $\text{eig = } \left[\begin{array}{rr}
 0 & 1 \\
 \end{array}\right]$
 ```
+
+Examples directory:
+
+- `examples/matrix_basic.jl`
+- `examples/qr_layout.jl`
+- `examples/eigen_table.jl`
+- `examples/python_interop.py`
 
 ## Backends (Symbolics and SymPy)
 

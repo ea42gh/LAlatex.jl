@@ -10,6 +10,12 @@ See the Quickstart page for a minimal setup and first render.
 
 See the Examples page for backend switching, assumptions, HTML helpers, and LaTeX helpers.
 
+## Gallery
+
+| Matrix | QR block layout | Eigen table |
+| --- | --- | --- |
+| ![Matrix example](assets/matrix.svg) | ![QR layout](assets/qr_layout.svg) | ![Eigen table](assets/eig_table.svg) |
+
 ## Troubleshooting
 
 - **SymPy import fails**: Ensure `sympy` is installed in the Python used by PythonCall. Check with `PythonCall.pyimport("sys").executable`.
