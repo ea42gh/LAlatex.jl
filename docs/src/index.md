@@ -12,9 +12,13 @@ See the Examples page for backend switching, assumptions, HTML helpers, and LaTe
 
 ## Gallery
 
-| Column vectors | SymPy linear combination | BlockArray (odd values) |
-| --- | --- | --- |
-| ![Column vectors](assets/column_vectors.svg) | ![SymPy linear combination](assets/sympy_lc.svg) | ![BlockArray odd values](assets/blockarray_colorize.svg) |
+| Column vectors | BlockArray (odd values) |
+| --- | --- |
+| ![Column vectors](assets/column_vectors.svg) | ![BlockArray odd values](assets/blockarray_colorize.svg) |
+
+SymPy linear combination:
+
+![SymPy linear combination](assets/sympy_lc.svg)
 
 ## Troubleshooting
 
