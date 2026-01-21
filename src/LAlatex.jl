@@ -3,12 +3,16 @@ module LAlatex
 const _pythoncall_loaded = Ref(false)
 
 _in_precompile() = ccall(:jl_generating_output, Cint, ()) == 1
+_pythoncall_disabled() = get(ENV, "LALATEX_DISABLE_PYTHONCALL", "") != ""
 
 function _pythoncall_module()
     return isdefined(@__MODULE__, :PythonCall) ? PythonCall : nothing
 end
 
 function _ensure_pythoncall()
+    if _pythoncall_disabled()
+        return nothing
+    end
     if _in_precompile()
         return nothing
     end
