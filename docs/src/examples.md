@@ -95,30 +95,52 @@ L_show(1, " = ", [1 2; 3 4])
 display(l_show(1, " = ", [1 2; 3 4]))
 ```
 
-Rendered output (LaTeX strings):
+Rendered output (LaTeX strings from `LAlatex_examples.ipynb`):
 
 ```text
-$\text{A = } \left(\begin{array}{rrr}
+$\text{Tuple of Column and Row vectors: } \begin{bmatrix}
 1 & 2 & 3 \\
-4 & 5 & 6 \\
+\end{bmatrix},\begin{bmatrix}
+4 \\
+5 \\
+6 \\
+\end{bmatrix}$
+```
+
+```text
+$(\xi) \Leftrightarrow\;\;  -  \left(2 \alpha_{2} + 4 \alpha_{5} + 7 \alpha_{6}\right)\left(\begin{array}{r}
+-2 \\
+0 \\
+-4 \\
+4 \\
+\end{array}\right)  +  \alpha_{2}\left(\begin{array}{r}
+-4 \\
+0 \\
+-8 \\
+8 \\
+\end{array}\right)  +  \left(2 \alpha_{5} + 3 \alpha_{6}\right)\left(\begin{array}{r}
+2 \\
+1 \\
+3 \\
+-1 \\
+\end{array}\right)  +  \left(\begin{array}{r}
+4 \\
+-2 \\
+10 \\
+-14 \\
+\end{array}\right)  -  \alpha_{6}\left(\begin{array}{r}
+8 \\
+-3 \\
+19 \\
+-25 \\
+\end{array}\right)  = 0$
+```
+
+```text
+$\text{Colorize odd values,  A=} \left(\begin{array}{rr|r}
+\textcolor{red}{1} & 2 & 4 \\ \hline
+\textcolor{red}{3} & 4 & \textcolor{red}{5} \\
 \end{array}\right)$
-```
-
-```text
-$\text{Q R = } \left[\begin{array}{rr|rr}
-1 & 0 & 0 & 0 \\
-0 & 1 & 0 & 0 \\ \hline
-0 & 0 & 2 & 1 \\
-0 & 0 & 0 & 3 \\
-\end{array}\right]$
-```
-
-```text
-$\text{eig = } \left[\begin{array}{rr}
-2 & -1 \\ \hline
-1 & 0 \\
-0 & 1 \\
-\end{array}\right]$
 ```
 
 `factor_out_denominator` returns a common denominator and a scaled matrix. Symbolic entries are expanded elementwise after scaling:
@@ -163,12 +185,3 @@ See the notebooks in `docs/src/notebooks/` for runnable walkthroughs:
 - `docs/src/notebooks/LAlatex_L_show_Guide.ipynb`
 - `docs/src/notebooks/LAlatex_HTML_Utilities.ipynb`
 - `docs/src/notebooks/LAlatex_from_Python.ipynb`
-
-## Examples directory
-
-Small runnable scripts live in `examples/`:
-
-- `examples/matrix_basic.jl`
-- `examples/qr_layout.jl`
-- `examples/eigen_table.jl`
-- `examples/python_interop.py`

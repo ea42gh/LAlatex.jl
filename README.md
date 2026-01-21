@@ -11,9 +11,9 @@ Why LAlatex?
 
 Gallery (rendered output):
 
-| Matrix | QR block layout | Eigen table |
+| Column vectors | SymPy linear combination | BlockArray (odd values) |
 | --- | --- | --- |
-| ![Matrix example](assets/matrix.svg) | ![QR layout](assets/qr_layout.svg) | ![Eigen table](assets/eig_table.svg) |
+| ![Column vectors](assets/column_vectors.svg) | ![SymPy linear combination](assets/sympy_lc.svg) | ![BlockArray odd values](assets/blockarray_colorize.svg) |
 
 LAlatex turns Julia objects into compact, readable LaTeX. It is designed for
 teaching and visualization: matrices, block matrices, linear combinations,
@@ -59,55 +59,38 @@ Mini gallery:
 using LAlatex
 using BlockArrays
 
-# Matrix
-A = [1 2 3; 4 5 6]
-l_show("A = ", A)
+# Column vectors
+v1 = [1, 2, 3]
+v2 = [4 5 6]
+t8a = (v1', v2')
+l_show("Tuple of Column and Row vectors: ", t8a, arraystyle=:bmatrix)
 
-# QR-style block layout
-Q = [1 0; 0 1]
-R = [2 1; 0 3]
-qr_block = BlockArray([Q zeros(2,2); zeros(2,2) R], [2,2], [2,2])
-l_show("Q R = ", qr_block; arraystyle=:barray)
+# SymPy backend + linear combination
+LAlatex.set_backend!(:sympy)
+α = [syms("α_$i"; real=true) for i in 1:6]
+s  = [ -2α[2] + 4α[5] + 7α[6],  α[2],  0,  2α[5] + 3α[6],  1,  -α[6] ]
+X  = [ -2 -4  -2   2   4    8
+        0  0  -1   1  -2   -3
+       -4 -8  -3   3  10   19
+        4  8   0  -1 -14  -25 ]
+l_show( L"(\\xi) \\Leftrightarrow\\;\\;", lc(s, X; sign_policy=:signed, omit_one=true, drop_zero=true), "= 0")
 
-# Eigen table (values and eigenvectors)
-eigvals = [2, -1]
-eigvecs = [1 0; 0 1]
-eig_table = BlockArray([eigvals'; eigvecs], [1,2], [2])
-l_show("eig = ", eig_table; arraystyle=:barray)
+# BlockArray with odd entries colored
+A = BlockArray([1 2 4; 3 4 5], [1, 1], [2, 1])
+function color_odd_numbers(x, i, j, latex_str)
+    return isodd(x) ? "\\textcolor{red}{$latex_str}" : latex_str
+end
+display(l_show("Colorize odd values,  A=", A; per_element_style=color_odd_numbers))
 ```
 
 Rendered output (LaTeX strings):
 
 ```text
-$\text{A = } \left(\begin{array}{rrr}
-1 & 2 & 3 \\
-4 & 5 & 6 \\
+$\text{Colorize odd values,  A=} \left(\begin{array}{rr|r}
+\textcolor{red}{1} & 2 & 4 \\ \hline
+\textcolor{red}{3} & 4 & \textcolor{red}{5} \\
 \end{array}\right)$
 ```
-
-```text
-$\text{Q R = } \left[\begin{array}{rr|rr}
-1 & 0 & 0 & 0 \\
-0 & 1 & 0 & 0 \\ \hline
-0 & 0 & 2 & 1 \\
-0 & 0 & 0 & 3 \\
-\end{array}\right]$
-```
-
-```text
-$\text{eig = } \left[\begin{array}{rr}
-2 & -1 \\ \hline
-1 & 0 \\
-0 & 1 \\
-\end{array}\right]$
-```
-
-Examples directory:
-
-- `examples/matrix_basic.jl`
-- `examples/qr_layout.jl`
-- `examples/eigen_table.jl`
-- `examples/python_interop.py`
 
 ## Backends (Symbolics and SymPy)
 

@@ -12,9 +12,9 @@ See the Examples page for backend switching, assumptions, HTML helpers, and LaTe
 
 ## Gallery
 
-| Matrix | QR block layout | Eigen table |
+| Column vectors | SymPy linear combination | BlockArray (odd values) |
 | --- | --- | --- |
-| ![Matrix example](assets/matrix.svg) | ![QR layout](assets/qr_layout.svg) | ![Eigen table](assets/eig_table.svg) |
+| ![Column vectors](assets/column_vectors.svg) | ![SymPy linear combination](assets/sympy_lc.svg) | ![BlockArray odd values](assets/blockarray_colorize.svg) |
 
 ## Troubleshooting
 
