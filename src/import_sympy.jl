@@ -1,5 +1,3 @@
-using PythonCall
-
 const _sympy = Ref{Any}(nothing)
 # ---------------------------------------------------------------------------------------------
 """
@@ -11,6 +9,7 @@ function _python_exe_hint()
     # PythonCall exposes the Python executable via its runtime; keep robust.
     # If this fails for some future API change, we still emit the base guidance.
     try
+        _ensure_pythoncall()
         return String(pyimport("sys").executable)
     catch
         return nothing
@@ -26,6 +25,7 @@ Import and cache the Python module `sympy`. Provides an actionable error if unav
 function import_sympy()
     if _sympy[] === nothing
         try
+            _ensure_pythoncall()
             _sympy[] = pyimport("sympy")
         catch err
             exe = _python_exe_hint()

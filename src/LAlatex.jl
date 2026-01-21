@@ -1,5 +1,23 @@
 module LAlatex
-using PythonCall
+
+const _pythoncall_loaded = Ref(false)
+
+function _pythoncall_module()
+    return isdefined(@__MODULE__, :PythonCall) ? PythonCall : nothing
+end
+
+function _ensure_pythoncall()
+    if !_pythoncall_loaded[]
+        @eval using PythonCall
+        _pythoncall_loaded[] = true
+    end
+    return PythonCall
+end
+
+function _is_pythoncall_py(x)
+    pc = _pythoncall_module()
+    return pc !== nothing && x isa pc.Py
+end
 using Symbolics
 
 include("backend.jl")

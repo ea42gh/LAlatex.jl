@@ -219,7 +219,7 @@ function factor_out_denominator(A::AbstractArray)
             xi = imag(x)
             if xr isa Symbolics.Num
                 collect_symbolics_denoms(xr)
-            elseif xr isa PythonCall.Py
+            elseif _is_pythoncall_py(xr)
                 den = try
                     sympy = import_sympy()
                     sympy.denom(xr)
@@ -227,8 +227,9 @@ function factor_out_denominator(A::AbstractArray)
                     nothing
                 end
                 if den !== nothing
+                    pc = _ensure_pythoncall()
                     den_jl = try
-                        PythonCall.pyconvert(Any, den)
+                        pc.pyconvert(Any, den)
                     catch
                         nothing
                     end
@@ -241,7 +242,7 @@ function factor_out_denominator(A::AbstractArray)
             end
             if xi isa Symbolics.Num
                 collect_symbolics_denoms(xi)
-            elseif xi isa PythonCall.Py
+            elseif _is_pythoncall_py(xi)
                 den = try
                     sympy = import_sympy()
                     sympy.denom(xi)
@@ -249,8 +250,9 @@ function factor_out_denominator(A::AbstractArray)
                     nothing
                 end
                 if den !== nothing
+                    pc = _ensure_pythoncall()
                     den_jl = try
-                        PythonCall.pyconvert(Any, den)
+                        pc.pyconvert(Any, den)
                     catch
                         nothing
                     end
@@ -325,7 +327,7 @@ function factor_out_denominator(A::AbstractArray)
                 collect_symbolics_denoms(d; include_integers=true)
             end
             collect_symbolics_denoms(x)
-        elseif x isa PythonCall.Py
+        elseif _is_pythoncall_py(x)
             den = try
                 sympy = import_sympy()
                 sympy.denom(x)
@@ -333,8 +335,9 @@ function factor_out_denominator(A::AbstractArray)
                 nothing
             end
             if den !== nothing
+                pc = _ensure_pythoncall()
                 den_jl = try
-                    PythonCall.pyconvert(Any, den)
+                    pc.pyconvert(Any, den)
                 catch
                     nothing
                 end
@@ -364,9 +367,9 @@ function factor_out_denominator(A::AbstractArray)
         catch
             factored
         end
-    elseif any(x -> x isa PythonCall.Py, factored)
+    elseif any(_is_pythoncall_py, factored)
         sympy = import_sympy()
-        factored = map(x -> x isa PythonCall.Py ? sympy.expand(x) : x, factored)
+        factored = map(x -> _is_pythoncall_py(x) ? sympy.expand(x) : x, factored)
     end
     return d, factored
 end
@@ -653,7 +656,7 @@ function L_show_matrix(A; arraystyle=:parray, is_block_array=false, color=nothin
         A = Matrix(A)
     end
 
-    if any(x -> x isa Symbolics.Num || x isa PythonCall.Py, A)
+    if any(x -> x isa Symbolics.Num || _is_pythoncall_py(x), A)
         A = map(x -> symbolic_transform(x; symopts...), A)
     end
 
@@ -795,7 +798,7 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
 
     if obj isa Symbol || obj isa Symbolics.Num
         return style_wrapper(to_latex(symbolic_transform(obj; symopts...)) * " ", color)
-    elseif obj isa Number || obj isa PythonCall.Py
+    elseif obj isa Number || _is_pythoncall_py(obj)
         return L_show_number(symbolic_transform(obj; symopts...); color=color, number_formatter=number_formatter)
     end
 
@@ -1010,4 +1013,3 @@ Return a LaTeXString for display in notebook environments.
 function l_show(args...; kwargs...)
     return LaTeXString(L_show(args...; kwargs...))
 end
-

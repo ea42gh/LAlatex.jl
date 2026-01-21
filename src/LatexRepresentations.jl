@@ -2,7 +2,6 @@ using BlockArrays
 using LaTeXStrings
 using Latexify
 using LinearAlgebra
-using PythonCall
 using Symbolics
 
 """
@@ -114,9 +113,10 @@ function to_latex(x::Symbolics.Num; number_formatter=nothing)
 end
 
 function to_latex(x; number_formatter=nothing)
-    if x isa PythonCall.Py
+    if _is_pythoncall_py(x)
+        pc = _ensure_pythoncall()
         sympy = import_sympy()
-        s = strip(PythonCall.pyconvert(String, sympy.latex(x)), ['$', '\n'])
+        s = strip(pc.pyconvert(String, sympy.latex(x)), ['$', '\n'])
         s = fix_num_symbol_mul(s)
         s = replace(
             s,

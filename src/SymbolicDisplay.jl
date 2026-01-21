@@ -42,7 +42,7 @@ function symbolic_transform(x; simplify=:auto, expand=false, factor=false, colle
         return symbolic_transform(Symbolics.Num(x); simplify=simplify, expand=expand, factor=factor, collect=collect)
     end
 
-    if x isa PythonCall.Py
+    if _is_pythoncall_py(x)
         sympy = import_sympy()
         y = x
         if simplify !== false
