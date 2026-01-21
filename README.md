@@ -11,13 +11,25 @@ Why LAlatex?
 
 Gallery (rendered output):
 
-| Column vectors | BlockArray (odd values) |
-| --- | --- |
-| ![Column vectors](assets/column_vectors.svg) | ![BlockArray odd values](assets/blockarray_colorize.svg) |
+<table width="100%">
+  <tr>
+    <th>Column vectors</th>
+    <th>BlockArray (odd values)</th>
+  </tr>
+  <tr>
+    <td><img src="assets/column_vectors.svg" alt="Column vectors"></td>
+    <td><img src="assets/blockarray_colorize.svg" alt="BlockArray odd values"></td>
+  </tr>
+</table>
 
-SymPy linear combination:
-
-![SymPy linear combination](assets/sympy_lc.svg)
+<table width="100%">
+  <tr>
+    <th>SymPy linear combination</th>
+  </tr>
+  <tr>
+    <td><img src="assets/sympy_lc.svg" alt="SymPy linear combination"></td>
+  </tr>
+</table>
 
 LAlatex turns Julia objects into compact, readable LaTeX. It is designed for
 teaching and visualization: matrices, block matrices, linear combinations,
