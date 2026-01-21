@@ -43,6 +43,26 @@ Highlights:
 - Works with numbers, arrays, `BlockArray`s, `LinearCombination`s, and tuples.
 - Supports Symbolics and SymPy backends for symbolic algebra.
 
+Install:
+
+```julia
+using Pkg
+Pkg.add("LAlatex")
+```
+
+API cheat sheet:
+- `L_show(...)` -> LaTeX string
+- `l_show(...)` -> `LaTeXString` for display
+- `syms(...)`, `@syms` -> symbols (Symbolics or SymPy)
+- `set_backend!(:symbolics | :sympy)` -> backend switch
+
+Supported inputs:
+- Numbers and rationals
+- Vectors, matrices, and tuples
+- `BlockArray` and block-structured data
+- `LinearCombination` objects
+- Symbolics and SymPy expressions
+
 Quick start:
 
 ```julia
@@ -60,6 +80,9 @@ from juliacall import Main as jl
 jl.seval("using LAlatex")
 print(jl.LAlatex.L_show("A = ", [[1, 2], [3, 4]]))
 ```
+
+Notebook highlight:
+- `docs/src/notebooks/LAlatex_L_show_Guide.ipynb`
 
 Linear combinations and mixed text/math:
 

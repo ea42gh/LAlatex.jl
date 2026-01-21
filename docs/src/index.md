@@ -6,6 +6,20 @@ CurrentModule = LAlatex
 
 Documentation for [LAlatex](https://github.com/ea42gh/LAlatex.jl).
 
+## Install
+
+```julia
+using Pkg
+Pkg.add("LAlatex")
+```
+
+## API cheat sheet
+
+- `L_show(...)` -> LaTeX string
+- `l_show(...)` -> `LaTeXString` for display
+- `syms(...)`, `@syms` -> symbols (Symbolics or SymPy)
+- `set_backend!(:symbolics | :sympy)` -> backend switch
+
 See the Quickstart page for a minimal setup and first render.
 
 See the Examples page for backend switching, assumptions, HTML helpers, and LaTeX helpers.
