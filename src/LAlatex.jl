@@ -2,11 +2,16 @@ module LAlatex
 
 const _pythoncall_loaded = Ref(false)
 
+_in_precompile() = ccall(:jl_generating_output, Cint, ()) == 1
+
 function _pythoncall_module()
     return isdefined(@__MODULE__, :PythonCall) ? PythonCall : nothing
 end
 
 function _ensure_pythoncall()
+    if _in_precompile()
+        return nothing
+    end
     if !_pythoncall_loaded[]
         @eval using PythonCall
         _pythoncall_loaded[] = true
