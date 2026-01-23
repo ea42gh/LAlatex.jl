@@ -8,10 +8,7 @@ Documentation for [LAlatex](https://github.com/ea42gh/LAlatex.jl).
 
 ## Install
 
-```julia
-using Pkg
-Pkg.add("LAlatex")
-```
+See the Installation page for Julia + SymPy setup details.
 
 ## API cheat sheet
 

@@ -19,6 +19,7 @@ makedocs(;
     ),
     pages=[
         "Home" => "index.md",
+        "Installation" => "installation.md",
         "Quickstart" => "quickstart.md",
         "Python interop" => "python-interop.md",
         "Compatibility" => "compatibility.md",
