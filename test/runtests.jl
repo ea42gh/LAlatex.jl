@@ -76,6 +76,10 @@ end
             ys = LAlatex.syms_sympy(:y; real=true, positive=true)
             @test string(xs) == "x"
             @test string(ys) == "y"
+            m, n = LAlatex.syms_sympy(:m, :n)
+            @test string(m) == "m"
+            @test string(n) == "n"
+            @test string(LAlatex.syms(:u)) == "u"
 
             LAlatex.@syms_sympy p :real => true :positive => true
             @test string(p) == "p"
