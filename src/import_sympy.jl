@@ -10,7 +10,7 @@ function _python_exe_hint()
     # If this fails for some future API change, we still emit the base guidance.
     try
         _ensure_pythoncall()
-        return String(pyimport(:sys).executable)
+        return String(PythonCall.pyimport("sys").executable)
     catch
         return nothing
     end
@@ -26,7 +26,7 @@ function import_sympy()
     if _sympy[] === nothing
         try
             _ensure_pythoncall()
-            _sympy[] = pyimport(:sympy)
+            _sympy[] = PythonCall.pyimport("sympy")
         catch err
             exe = _python_exe_hint()
             exe_msg = exe === nothing ? "" : "PythonCall is currently using: $exe\n\n"
