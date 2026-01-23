@@ -62,10 +62,12 @@ x, y = syms_sympy(:x, :y; real=true)
 """
 function syms_sympy(names...; kwargs...)
     sympy = import_sympy()
+    # Avoid Py getproperty world-age issues by using pygetattr directly.
+    symbols = Base.invokelatest(PythonCall.pygetattr, sympy, "symbols")
     strnames = map(n -> n isa Symbol ? String(n) : String(n), names)
     isempty(strnames) && throw(ArgumentError("syms_sympy expects at least one name"))
     joined = length(strnames) == 1 ? strnames[1] : join(strnames, " ")
-    return sympy.symbols(joined; kwargs...)
+    return Base.invokelatest(symbols, joined; kwargs...)
 end
 
 # ---------------------------------------------------------------------------------------------
