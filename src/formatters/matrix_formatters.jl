@@ -75,7 +75,8 @@ end
 """
     rowechelon_formatter(x, i, j, formatted_x;
                          pivots::AbstractVector{<:Integer},
-                         color::String="red") -> String
+                         color::String="red",
+                         bg_color::String="gray!20") -> String
 
 Highlight pivot entries and all entries to the right on pivot rows for row-echelon displays.
 
@@ -84,11 +85,12 @@ that a row has no pivot.
 """
 function rowechelon_formatter(x, i, j, formatted_x;
                               pivots::AbstractVector{<:Integer},
-                              color::String = "red")
+                              color::String="red",
+                              bg_color::String="gray!20") -> String
     if 1 <= i <= length(pivots)
         pivot_col = pivots[i]
         if pivot_col > 0 && j >= pivot_col
-            return "\\textcolor{$color}{\\boldsymbol{$formatted_x}}"
+            return "\\colorbox{$bg_color}{\\textcolor{$color}{\\boldsymbol{$formatted_x}}}"
         end
     end
     return formatted_x
