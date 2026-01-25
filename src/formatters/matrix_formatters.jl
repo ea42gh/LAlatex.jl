@@ -86,7 +86,7 @@ that a row has no pivot.
 function rowechelon_formatter(x, i, j, formatted_x;
                               pivots::AbstractVector{<:Integer},
                               color::String="red",
-                              bg_color::String="gray!20") -> String
+                              bg_color::String="gray!20")::String
     if 1 <= i <= length(pivots)
         pivot_col = pivots[i]
         if pivot_col > 0 && j >= pivot_col
