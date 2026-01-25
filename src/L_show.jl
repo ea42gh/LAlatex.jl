@@ -799,9 +799,36 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
     if obj isa Symbol || obj isa Symbolics.Num
         return style_wrapper(to_latex(symbolic_transform(obj; symopts...)) * " ", color)
     elseif _is_sympy_py(obj)
+        pc = _pythoncall_module()
+        if pc !== nothing
+            # Prefer rendering SymPy matrices via L_show_matrix so arraystyle applies.
+            try
+                tolist = Base.invokelatest(pc.pygetattr, obj, "tolist")
+                shape = Base.invokelatest(pc.pygetattr, obj, "shape")
+                shp = Base.invokelatest(pc.pyconvert, Tuple, shape)
+                if length(shp) == 2
+                    pyrows = Base.invokelatest(pc.pycall, tolist)
+                    rows = Base.invokelatest(pc.pyconvert, Vector, pyrows)
+                    m = length(rows)
+                    n = m == 0 ? 0 : length(Base.invokelatest(pc.pyconvert, Vector, rows[1]))
+                    A = Matrix{Any}(undef, m, n)
+                    for i in 1:m
+                        row = Base.invokelatest(pc.pyconvert, Vector, rows[i])
+                        for j in 1:n
+                            A[i, j] = row[j]
+                        end
+                    end
+                    return L_show_matrix(A; arraystyle=arraystyle, color=color,
+                                         number_formatter=number_formatter,
+                                         per_element_style=per_element_style,
+                                         factor_out=factor_out, symopts=symopts)
+                end
+            catch
+                # Fallback to sympy.latex below.
+            end
+        end
         sympy = import_sympy()
         latex_py = sympy.latex(obj)
-        pc = _pythoncall_module()
         latex_str = pc === nothing ? string(latex_py) : String(Base.invokelatest(pc.pyconvert, String, latex_py))
         return style_wrapper(latex_str, color)
     elseif obj isa Number || _is_pythoncall_py(obj)
