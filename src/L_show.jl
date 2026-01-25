@@ -798,6 +798,12 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
 
     if obj isa Symbol || obj isa Symbolics.Num
         return style_wrapper(to_latex(symbolic_transform(obj; symopts...)) * " ", color)
+    elseif _is_sympy_py(obj)
+        sympy = import_sympy()
+        latex_py = sympy.latex(obj)
+        pc = _pythoncall_module()
+        latex_str = pc === nothing ? string(latex_py) : String(Base.invokelatest(pc.pyconvert, String, latex_py))
+        return style_wrapper(latex_str, color)
     elseif obj isa Number || _is_pythoncall_py(obj)
         return L_show_number(symbolic_transform(obj; symopts...); color=color, number_formatter=number_formatter)
     end

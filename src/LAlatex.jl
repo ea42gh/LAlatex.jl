@@ -27,6 +27,25 @@ function _is_pythoncall_py(x)
     pc = _pythoncall_module()
     return pc !== nothing && x isa pc.Py
 end
+
+function _sympy_module_name(x)
+    pc = _pythoncall_module()
+    if pc === nothing || !(x isa pc.Py)
+        return nothing
+    end
+    try
+        cls = Base.invokelatest(pc.pygetattr, x, "__class__")
+        mod = Base.invokelatest(pc.pygetattr, cls, "__module__")
+        return String(Base.invokelatest(pc.pyconvert, String, mod))
+    catch
+        return nothing
+    end
+end
+
+function _is_sympy_py(x)
+    mod = _sympy_module_name(x)
+    return mod !== nothing && (mod == "sympy" || startswith(mod, "sympy."))
+end
 using Symbolics
 
 include("backend.jl")
