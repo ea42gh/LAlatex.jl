@@ -31,6 +31,11 @@ function to_latex(x::LaTeXString; number_formatter=nothing)
     return strip_math_delims(string(x))
 end
 
+"""
+    to_latex(x::String; number_formatter=nothing) -> String
+
+Convert a string to LaTeX, treating math-like strings as math.
+"""
 function to_latex(x::String; number_formatter=nothing)
     if looks_like_math(x)
         return strip_math_delims(x)
@@ -39,10 +44,16 @@ function to_latex(x::String; number_formatter=nothing)
     return "\\text{" * sanitized * "}"
 end
 
+"""
+    to_latex(x::Char; number_formatter=nothing) -> String
+"""
 function to_latex(x::Char; number_formatter=nothing)
     return to_latex(string(x))
 end
 
+"""
+    to_latex(x::Rational{Int}; number_formatter=nothing) -> String
+"""
 function to_latex(x::Rational{Int}; number_formatter=nothing)
     n, d = numerator(x), denominator(x)
     if d == 1
@@ -53,6 +64,9 @@ function to_latex(x::Rational{Int}; number_formatter=nothing)
     end
 end
 
+"""
+    to_latex(x::Complex; number_formatter=nothing) -> String
+"""
 function to_latex(x::Complex{T}; number_formatter=nothing) where T
     x_real = real(x)
     x_imag = imag(x)
@@ -90,6 +104,9 @@ function to_latex(x::Complex{T}; number_formatter=nothing) where T
     end
 end
 
+"""
+    to_latex(x::Float64; number_formatter=nothing) -> String
+"""
 function to_latex(x::Float64; number_formatter=nothing)
     x = number_formatter !== nothing ? number_formatter(x) : x
     str_x = string(x)
@@ -102,16 +119,25 @@ function to_latex(x::Float64; number_formatter=nothing)
     end
 end
 
+"""
+    to_latex(x::Symbol; number_formatter=nothing) -> String
+"""
 function to_latex(x::Symbol; number_formatter=nothing)
     return string(x)
 end
 
+"""
+    to_latex(x::Symbolics.Num; number_formatter=nothing) -> String
+"""
 function to_latex(x::Symbolics.Num; number_formatter=nothing)
     s = string(latexify(Symbolics.simplify(x)))
     s = normalize_symbolics_latex(s)
     return isempty(s) ? string(x) : s
 end
 
+"""
+    to_latex(x; number_formatter=nothing) -> String
+"""
 function to_latex(x; number_formatter=nothing)
     if _is_pythoncall_py(x)
         pc = _ensure_pythoncall()
@@ -131,22 +157,37 @@ function to_latex(x; number_formatter=nothing)
     return isempty(s) ? string(x) : s
 end
 
+"""
+    to_latex(A::AbstractArray; number_formatter=nothing)
+"""
 function to_latex(A::AbstractArray; number_formatter=nothing)
     return map(x -> to_latex(x; number_formatter=number_formatter), A)
 end
 
+"""
+    to_latex(A::Transpose; number_formatter=nothing)
+"""
 function to_latex(A::Transpose; number_formatter=nothing)
     return to_latex(parent(A); number_formatter=number_formatter)'
 end
 
+"""
+    to_latex(A::Adjoint; number_formatter=nothing)
+"""
 function to_latex(A::Adjoint; number_formatter=nothing)
     return to_latex(parent(A); number_formatter=number_formatter)'
 end
 
+"""
+    to_latex(A::BlockArray; number_formatter=nothing)
+"""
 function to_latex(A::BlockArray; number_formatter=nothing)
     return to_latex(Matrix(A); number_formatter=number_formatter)
 end
 
+"""
+    to_latex(matrices::Vector; number_formatter=nothing)
+"""
 function to_latex(matrices::Vector; number_formatter=nothing)
     return [[is_none_val(mat) ? nothing : to_latex(mat; number_formatter=number_formatter) for mat in row] for row in matrices]
 end

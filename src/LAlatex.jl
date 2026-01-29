@@ -130,6 +130,11 @@ Set the default backend for this session. Supported values:
 - `Backend.SymPyBackend()` or `:sympy`
 """
 set_backend!(b::Backend.BackendTag) = Backend.set_backend!(b)
+"""
+    set_backend!(backend::Symbol)
+
+Set the default backend using `:symbolics` or `:sympy`.
+"""
 function set_backend!(backend::Symbol)
     if backend === :symbolics
         return set_backend!(Backend.SymbolicsBackend())
