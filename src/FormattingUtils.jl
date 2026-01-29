@@ -50,7 +50,7 @@ Return a LaTeX-safe separator string, removing outer math delimiters when needed
 """
 function normalize_separator(separator)
     if separator isa LaTeXString
-        return to_latex(separator)
+        return strip_math_delims(to_latex(separator))
     end
     return strip_math_delims(string(separator))
 end
