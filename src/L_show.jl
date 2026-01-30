@@ -683,6 +683,29 @@ end
 Create a linear-combination group that `l_show` can render.
 """
 function lc(s, X; kwargs...)
+    if _is_pythoncall_py(s) || _is_pythoncall_py(X)
+        pc = _ensure_pythoncall()
+        if pc !== nothing
+            if _is_pythoncall_py(s)
+                try
+                    s = Base.invokelatest(pc.pyconvert, Vector{Any}, s)
+                catch
+                    try
+                        s = vec(Base.invokelatest(pc.pyconvert, Matrix{Any}, s))
+                    catch
+                        # fall through with original s
+                    end
+                end
+            end
+            if _is_pythoncall_py(X)
+                try
+                    X = Base.invokelatest(pc.pyconvert, Matrix{Any}, X)
+                catch
+                    # fall through with original X
+                end
+            end
+        end
+    end
     return LinearCombination(s, X, (; kwargs...))
 end
 

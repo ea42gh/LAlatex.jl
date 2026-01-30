@@ -72,6 +72,7 @@ function diagonal_blocks_formatter(x, i, j, formatted_x;
     return "\\textcolor{$color}{$formatted_x}"
 end
 
+
 """
     rowechelon_formatter(x, i, j, formatted_x;
                          pivots::AbstractVector{<:Integer},
