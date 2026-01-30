@@ -168,14 +168,14 @@ end
     to_latex(A::Transpose; number_formatter=nothing)
 """
 function to_latex(A::Transpose; number_formatter=nothing)
-    return to_latex(parent(A); number_formatter=number_formatter)'
+    return permutedims(to_latex(parent(A); number_formatter=number_formatter))
 end
 
 """
     to_latex(A::Adjoint; number_formatter=nothing)
 """
 function to_latex(A::Adjoint; number_formatter=nothing)
-    return to_latex(parent(A); number_formatter=number_formatter)'
+    return permutedims(to_latex(parent(A); number_formatter=number_formatter))
 end
 
 """
