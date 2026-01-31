@@ -46,7 +46,7 @@ Use `symopts=(; factor=true)` or `symopts=(factor=true,)` to build a `NamedTuple
 - `underline_formatter`, `overline_formatter`
 - `combine_formatters`
 - `scientific_formatter`, `percentage_formatter`, `exponential_formatter`
-- `tril_formatter`, `block_formatter`, `diagonal_blocks_formatter`
+- `tril_formatter`, `block_formatter`, `diagonal_blocks_formatter`, `jordanblock_formatter`
 - `rowechelon_formatter`
 
 ## LaTeX display helpers

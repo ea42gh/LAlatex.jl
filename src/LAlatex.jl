@@ -64,7 +64,7 @@ export to_html, show_html, pr, capture_output, show_side_by_side_html, show_side
 export bold_formatter, italic_formatter, color_formatter, conditional_color_formatter
 export highlight_large_values, underline_formatter, overline_formatter, combine_formatters
 export scientific_formatter, percentage_formatter, exponential_formatter
-export tril_formatter, block_formatter, diagonal_blocks_formatter, rowechelon_formatter
+export tril_formatter, block_formatter, diagonal_blocks_formatter, jordanblock_formatter, rowechelon_formatter
 export to_latex
 export mixed_matrix, @mixed_matrix
 export L_show, l_show, set, lc

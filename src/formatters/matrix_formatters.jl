@@ -72,6 +72,26 @@ function diagonal_blocks_formatter(x, i, j, formatted_x;
     return "\\textcolor{$color}{$formatted_x}"
 end
 
+"""
+    jordanblock_formatter(blocks; colors=["red"]) -> Function
+
+Return a `per_element_style` formatter that highlights diagonal blocks.
+"""
+function jordanblock_formatter(blocks::Vector{Int}; colors::Vector{String} = ["red"])
+    starts = cumsum([1; blocks[1:end-1]])
+    stops = cumsum(blocks)
+
+    return (x, i, j, formatted_x) -> begin
+        block_id = findfirst(k -> starts[k] <= i <= stops[k], eachindex(blocks))
+        block_id === nothing && return formatted_x
+        if starts[block_id] <= j <= stops[block_id]
+            color = colors[mod(block_id - 1, length(colors)) + 1]
+            return "\\textcolor{$color}{$formatted_x}"
+        end
+        return formatted_x
+    end
+end
+
 
 """
     rowechelon_formatter(x, i, j, formatted_x;
