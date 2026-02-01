@@ -793,6 +793,21 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
         return join(formatted_entries, separator_str)
     end
 
+    if obj isa UniformScaling{Bool}
+        return L_show_string(obj.λ ? "I" : "0"; color=color)
+    end
+
+    if obj isa UniformScaling
+        λ = obj.λ
+        if λ == 0
+            return L_show_string("0"; color=color)
+        elseif λ == 1
+            return L_show_string("I"; color=color)
+        else
+            return L_show_string("$(to_latex(λ)) I"; color=color)
+        end
+    end
+
     if obj isa AbstractString
         return L_show_string(obj; color=color)
     end
