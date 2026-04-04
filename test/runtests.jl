@@ -201,10 +201,10 @@ end
         @test LAlatex.diagonal_blocks_formatter(1, 4, 4, "x"; blocks=blocks, colors=colors) == "\\textcolor{red}{x}"
 
         pivots = [1, 3]
-        @test LAlatex.rowechelon_formatter(1, 1, 1, "x"; pivots=pivots) == "\\textcolor{red}{\\boldsymbol{x}}"
-        @test LAlatex.rowechelon_formatter(1, 1, 2, "x"; pivots=pivots) == "\\textcolor{red}{\\boldsymbol{x}}"
+        @test LAlatex.rowechelon_formatter(1, 1, 1, "x"; pivots=pivots) == "\\textcolor{red}{x}"
+        @test LAlatex.rowechelon_formatter(1, 1, 2, "x"; pivots=pivots) == "\\textcolor{red}{x}"
         @test LAlatex.rowechelon_formatter(1, 2, 2, "x"; pivots=pivots) == "x"
-        @test LAlatex.rowechelon_formatter(1, 2, 3, "x"; pivots=pivots) == "\\textcolor{red}{\\boldsymbol{x}}"
+        @test LAlatex.rowechelon_formatter(1, 2, 3, "x"; pivots=pivots) == "\\textcolor{red}{x}"
     end
 
     @testset "L_show helpers" begin
