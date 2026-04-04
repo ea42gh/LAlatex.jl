@@ -168,6 +168,22 @@ end
         latex_alpha = LAlatex.to_latex(alpha)
         @test occursin("\\alpha", latex_alpha) || occursin("α", latex_alpha)
         @test occursin("_1", latex_alpha)
+
+        pi_over_3 = Num(π) / 3
+        latex_pi_over_3 = LAlatex.to_latex(pi_over_3)
+        @test occursin("\\pi", latex_pi_over_3)
+        @test occursin("3", latex_pi_over_3)
+        @test !occursin("1.047", latex_pi_over_3)
+
+        latex_cos = LAlatex.to_latex(cos(pi_over_3))
+        @test occursin("\\cos\\left(", latex_cos)
+        @test occursin("\\pi", latex_cos)
+        @test occursin("3", latex_cos)
+
+        latex_sin = LAlatex.to_latex(sin(pi_over_3))
+        @test occursin("\\sin\\left(", latex_sin)
+        @test occursin("\\pi", latex_sin)
+        @test occursin("3", latex_sin)
     end
 
     @testset "Formatters" begin

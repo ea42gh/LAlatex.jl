@@ -130,8 +130,105 @@ end
     to_latex(x::Symbolics.Num; number_formatter=nothing) -> String
 """
 function to_latex(x::Symbolics.Num; number_formatter=nothing)
-    s = string(latexify(Symbolics.simplify(x)))
+    y = x
+    s = _symbolics_to_latex(y)
     s = normalize_symbolics_latex(s)
+    return isempty(s) ? string(y) : s
+end
+
+function _symbolics_to_latex(x::Symbolics.Num)
+    return _symbolics_to_latex(Symbolics.unwrap(x))
+end
+
+function _symbolics_to_latex(x::Integer)
+    return string(x)
+end
+
+function _symbolics_to_latex(x::Rational)
+    n, d = numerator(x), denominator(x)
+    if d == 1
+        return string(n)
+    end
+    sign_str = n < 0 ? "-" : ""
+    return sign_str * "\\frac{$(abs(n))}{$d}"
+end
+
+function _symbolics_to_latex(x::AbstractFloat)
+    return to_latex(x)
+end
+
+function _symbolics_to_latex(x::Irrational{:π})
+    return "\\pi"
+end
+
+function _symbolics_to_latex(x::Symbol)
+    return string(x)
+end
+
+function _symbolics_to_latex(x)
+    sx = string(x)
+    if sx == "π"
+        return "\\pi"
+    end
+
+    if Symbolics.SymbolicUtils.issym(x)
+        return sx == "π" ? "\\pi" : sx
+    end
+
+    if Symbolics.SymbolicUtils.is_literal_number(x)
+        return _symbolics_to_latex(Symbolics.SymbolicUtils.unwrap_const(x))
+    end
+
+    if Symbolics.SymbolicUtils.iscall(x)
+        op = Symbolics.SymbolicUtils.operation(x)
+        args = Symbolics.SymbolicUtils.arguments(x)
+
+        if op === (/)
+            return "\\frac{$(_symbolics_to_latex(args[1]))}{$(_symbolics_to_latex(args[2]))}"
+        elseif op === (*)
+            pieces = String[]
+            for arg in args
+                part = _symbolics_to_latex(arg)
+                if Symbolics.SymbolicUtils.iscall(arg)
+                    argop = Symbolics.SymbolicUtils.operation(arg)
+                    if argop === (+) || argop === (-)
+                        part = "\\left(" * part * "\\right)"
+                    end
+                end
+                push!(pieces, part)
+            end
+            return join(pieces, " ")
+        elseif op === (+)
+            out = _symbolics_to_latex(args[1])
+            for arg in Iterators.drop(args, 1)
+                part = _symbolics_to_latex(arg)
+                if startswith(part, "-")
+                    out *= " - " * strip(part[2:end])
+                else
+                    out *= " + " * part
+                end
+            end
+            return out
+        elseif op === (-)
+            if length(args) == 1
+                return "-" * _symbolics_to_latex(args[1])
+            end
+            return _symbolics_to_latex(args[1]) * " - " * _symbolics_to_latex(args[2])
+        elseif op === (^)
+            base = _symbolics_to_latex(args[1])
+            expo = _symbolics_to_latex(args[2])
+            if Symbolics.SymbolicUtils.iscall(args[1])
+                base = "\\left(" * base * "\\right)"
+            end
+            return base * "^{" * expo * "}"
+        elseif op === sqrt
+            return "\\sqrt{$(_symbolics_to_latex(args[1]))}"
+        elseif op === sin || op === cos || op === tan
+            return "\\" * string(op) * "\\left(" * _symbolics_to_latex(args[1]) * "\\right)"
+        end
+    end
+
+    s = string(latexify(x))
     return isempty(s) ? string(x) : s
 end
 

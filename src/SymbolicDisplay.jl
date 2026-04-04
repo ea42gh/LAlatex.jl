@@ -21,7 +21,7 @@ function symbolic_transform(x; simplify=:auto, expand=false, factor=false, colle
                 y
             end
         end
-        if simplify !== false
+        if simplify === true
             y = try
                 Symbolics.simplify(y)
             catch
