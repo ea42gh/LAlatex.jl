@@ -2,17 +2,6 @@ using Test
 using LaTeXStrings
 using PythonCall
 
-if !haskey(ENV, "JULIA_PYTHONCALL_EXE") || isempty(ENV["JULIA_PYTHONCALL_EXE"])
-    for name in ("python3", "python")
-        exe = Sys.which(name)
-        if exe !== nothing
-            ENV["JULIA_PYTHONCALL_EXE"] = exe
-            @info "Set JULIA_PYTHONCALL_EXE for tests" exe
-            break
-        end
-    end
-end
-
 using LAlatex
 using Symbolics
 
@@ -184,6 +173,36 @@ end
         @test occursin("\\sin\\left(", latex_sin)
         @test occursin("\\pi", latex_sin)
         @test occursin("3", latex_sin)
+
+        @variables t
+        latex_exp = LAlatex.to_latex(exp(-3t))
+        @test occursin("e^{", latex_exp)
+        @test !occursin("\\begin{equation}", latex_exp)
+        exp_vec = Num[(6//1) - (5//1)*exp(-3t), (18//1) - (19//1)*exp(-3t), (18//1) - (16//1)*exp(-3t)]
+        exp_vec_latex = LAlatex.L_show(exp_vec)
+        @test occursin("e^{", exp_vec_latex)
+        @test !occursin("\\begin{equation}", exp_vec_latex)
+
+        @variables n
+        rational_power = LAlatex.L_show((3//10)^n)
+        @test occursin("\\left(\\frac{3}{10}\\right)^{n}", rational_power)
+
+        for (f, latex_name) in (
+            (log, "\\log"),
+            (asin, "\\arcsin"),
+            (acos, "\\arccos"),
+            (atan, "\\arctan"),
+            (sinh, "\\sinh"),
+            (cosh, "\\cosh"),
+            (tanh, "\\tanh"),
+            (asinh, "\\operatorname{asinh}"),
+            (acosh, "\\operatorname{acosh}"),
+            (atanh, "\\operatorname{atanh}"),
+        )
+            rendered = LAlatex.to_latex(f(t))
+            @test occursin(latex_name * "\\left(", rendered)
+            @test !occursin("\\begin{equation}", rendered)
+        end
     end
 
     @testset "Formatters" begin
@@ -259,6 +278,14 @@ end
         expanded = LAlatex.L_show(expr; symopts=(expand=true,))
         @test occursin("x^2", expanded) || occursin("x^{2}", expanded)
 
+        @test LAlatex.to_latex(-x) == "-x"
+        @test !occursin("-1", LAlatex.to_latex(-(x + y)))
+        lc_signed = LAlatex.L_show(LAlatex.lc([-(x + y), x - y, 1], [x y x + y]))
+        @test occursin("-  \\left", lc_signed)
+        @test occursin("+  \\left(-", lc_signed)
+        @test !occursin("\\left(1 ", lc_signed)
+        @test !occursin(" -  \\left(1 ", lc_signed)
+
         symA = [1//2 x; 3//4 y]
         factor, symA_out = LAlatex.factor_out_denominator(symA)
         @test factor == 4
@@ -281,6 +308,16 @@ end
         @test isequal(symC_out[1, 1], 3 * x)
         @test symC_out[1, 2] == 2
 
+        @variables n
+        p = (3//10)^n
+        power_matrix = [-6p p p; -21p 4p 3p; -21p 3p 4p]
+        factorP, power_out = LAlatex.factor_out_denominator(power_matrix)
+        @test factorP == 1
+        @test isequal(power_out, power_matrix)
+        power_latex = LAlatex.L_show("A10n=", power_matrix)
+        @test !occursin("\\frac{1}{10} \\left", power_latex)
+        @test occursin("\\left(\\frac{3}{10}\\right)^{n}", power_latex)
+
         if ok
             LAlatex.set_backend!(:sympy)
             a_py, b_py = LAlatex.syms(:a, :b)
@@ -292,6 +329,11 @@ end
             expanded_py = LAlatex.L_show(expr_py; symopts=(expand=true,))
             @test occursin("a", expanded_py)
             @test occursin("b", expanded_py)
+
+            lc_py = LAlatex.L_show(LAlatex.lc([-(a_py + b_py), a_py - b_py, -a_py], [a_py b_py a_py]))
+            @test occursin("-  \\left", lc_py)
+            @test occursin("+  \\left", lc_py)
+            @test occursin("-  a", lc_py)
 
             sympy = LAlatex.import_sympy()
             f_py = LAlatex.mixed_matrix((sympy.Rational(1, 2), a_py), (sympy.Rational(1, 3), b_py))

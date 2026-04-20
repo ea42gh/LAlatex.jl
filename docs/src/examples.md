@@ -82,6 +82,20 @@ expr = (x + y)^2
 L_show(expr; symopts=(expand=true,))
 ```
 
+Symbolic coefficients also work in linear combinations. In signed mode,
+coefficients that are structurally negative are displayed with a leading minus,
+while mixed-sign coefficients stay parenthesized with their own signs.
+
+```julia
+set_backend!(:symbolics)
+x, y = syms(:x, :y)
+
+coeffs = [-(x + y), x - y, 1]
+vectors = [x y x + y]
+
+l_show(lc(coeffs, vectors; sign_policy=:signed))
+```
+
 ## Formatter helpers
 
 ```julia

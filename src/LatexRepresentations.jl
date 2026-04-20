@@ -165,6 +165,23 @@ function _symbolics_to_latex(x::Symbol)
     return string(x)
 end
 
+function _symbolic_function_latex_name(op)
+    op === log && return "\\log"
+    op === sin && return "\\sin"
+    op === cos && return "\\cos"
+    op === tan && return "\\tan"
+    op === asin && return "\\arcsin"
+    op === acos && return "\\arccos"
+    op === atan && return "\\arctan"
+    op === sinh && return "\\sinh"
+    op === cosh && return "\\cosh"
+    op === tanh && return "\\tanh"
+    op === asinh && return "\\operatorname{asinh}"
+    op === acosh && return "\\operatorname{acosh}"
+    op === atanh && return "\\operatorname{atanh}"
+    return nothing
+end
+
 function _symbolics_to_latex(x)
     sx = string(x)
     if sx == "π"
@@ -187,7 +204,17 @@ function _symbolics_to_latex(x)
             return "\\frac{$(_symbolics_to_latex(args[1]))}{$(_symbolics_to_latex(args[2]))}"
         elseif op === (*)
             pieces = String[]
+            sign_prefix = ""
             for arg in args
+                if Symbolics.SymbolicUtils.is_literal_number(arg)
+                    val = Symbolics.SymbolicUtils.unwrap_const(arg)
+                    if length(args) > 1 && val == 1
+                        continue
+                    elseif length(args) > 1 && val == -1
+                        sign_prefix = "-"
+                        continue
+                    end
+                end
                 part = _symbolics_to_latex(arg)
                 if Symbolics.SymbolicUtils.iscall(arg)
                     argop = Symbolics.SymbolicUtils.operation(arg)
@@ -197,7 +224,9 @@ function _symbolics_to_latex(x)
                 end
                 push!(pieces, part)
             end
-            return join(pieces, " ")
+            body = join(pieces, " ")
+            isempty(body) && return sign_prefix == "-" ? "-1" : "1"
+            return sign_prefix * body
         elseif op === (+)
             out = _symbolics_to_latex(args[1])
             for arg in Iterators.drop(args, 1)
@@ -217,14 +246,19 @@ function _symbolics_to_latex(x)
         elseif op === (^)
             base = _symbolics_to_latex(args[1])
             expo = _symbolics_to_latex(args[2])
-            if Symbolics.SymbolicUtils.iscall(args[1])
+            if Symbolics.SymbolicUtils.iscall(args[1]) || startswith(base, "\\frac")
                 base = "\\left(" * base * "\\right)"
             end
             return base * "^{" * expo * "}"
         elseif op === sqrt
             return "\\sqrt{$(_symbolics_to_latex(args[1]))}"
-        elseif op === sin || op === cos || op === tan
-            return "\\" * string(op) * "\\left(" * _symbolics_to_latex(args[1]) * "\\right)"
+        elseif op === exp
+            return "e^{" * _symbolics_to_latex(args[1]) * "}"
+        else
+            latex_name = _symbolic_function_latex_name(op)
+            if latex_name !== nothing && length(args) == 1
+                return latex_name * "\\left(" * _symbolics_to_latex(args[1]) * "\\right)"
+            end
         end
     end
 

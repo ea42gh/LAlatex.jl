@@ -9,8 +9,9 @@ function _python_exe_hint()
     # PythonCall exposes the Python executable via its runtime; keep robust.
     # If this fails for some future API change, we still emit the base guidance.
     try
-        _ensure_pythoncall()
-        return String(Base.invokelatest(PythonCall.pyimport, "sys").executable)
+        pc = _ensure_pythoncall()
+        pc === nothing && return nothing
+        return String(Base.invokelatest(pc.pyimport, "sys").executable)
     catch
         return nothing
     end
@@ -25,8 +26,9 @@ Import and cache the Python module `sympy`. Provides an actionable error if unav
 function import_sympy()
     if _sympy[] === nothing
         try
-            _ensure_pythoncall()
-            _sympy[] = Base.invokelatest(PythonCall.pyimport, "sympy")
+            pc = _ensure_pythoncall()
+            pc === nothing && error("PythonCall is not available in the current context.")
+            _sympy[] = Base.invokelatest(pc.pyimport, "sympy")
         catch err
             exe = _python_exe_hint()
             exe_msg = exe === nothing ? "" : "PythonCall is currently using: $exe\n\n"
@@ -62,8 +64,9 @@ x, y = syms_sympy(:x, :y; real=true)
 """
 function syms_sympy(names...; kwargs...)
     sympy = import_sympy()
+    pc = _ensure_pythoncall()
     # Avoid Py getproperty world-age issues by using pygetattr directly.
-    symbols = Base.invokelatest(PythonCall.pygetattr, sympy, "symbols")
+    symbols = Base.invokelatest(pc.pygetattr, sympy, "symbols")
     strnames = map(n -> n isa Symbol ? String(n) : String(n), names)
     isempty(strnames) && throw(ArgumentError("syms_sympy expects at least one name"))
     joined = length(strnames) == 1 ? strnames[1] : join(strnames, " ")

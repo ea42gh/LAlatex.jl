@@ -6,7 +6,7 @@ _in_precompile() = ccall(:jl_generating_output, Cint, ()) == 1
 _pythoncall_disabled() = get(ENV, "LALATEX_DISABLE_PYTHONCALL", "") != ""
 
 function _pythoncall_module()
-    return isdefined(@__MODULE__, :PythonCall) ? PythonCall : nothing
+    return isdefined(@__MODULE__, :PythonCall) ? Base.invokelatest(getfield, @__MODULE__, :PythonCall) : nothing
 end
 
 function _ensure_pythoncall()
@@ -20,7 +20,7 @@ function _ensure_pythoncall()
         @eval using PythonCall
         _pythoncall_loaded[] = true
     end
-    return PythonCall
+    return Base.invokelatest(getfield, @__MODULE__, :PythonCall)
 end
 
 function _is_pythoncall_py(x)

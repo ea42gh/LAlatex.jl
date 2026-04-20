@@ -113,71 +113,63 @@ entries return the original array with factor 1.
 function factor_out_denominator(A::AbstractArray)
     denominators = Int[]
     collect_symbolics_denoms = function(x; include_integers=false)
+        local function unwrap_literal(val)
+            if val isa Symbolics.Num
+                val = Symbolics.unwrap(val)
+            end
+            if Symbolics.SymbolicUtils.is_literal_number(val)
+                return Symbolics.SymbolicUtils.unwrap_const(val)
+            end
+            return val
+        end
+
         local function push_literal_denominator(val; include_integers_local=false)
+            val = unwrap_literal(val)
             if val isa Rational
                 push!(denominators, denominator(val))
             elseif include_integers_local && val isa Integer
-                push!(denominators, Int(val))
+                push!(denominators, abs(Int(val)))
             elseif val isa Complex{Rational{Int}}
                 push!(denominators, denominator(real(val)))
                 push!(denominators, denominator(imag(val)))
             end
         end
+
+        local function push_divisor_denominator(val)
+            val = unwrap_literal(val)
+            if val isa Integer
+                push!(denominators, abs(Int(val)))
+            elseif val isa Rational
+                n = numerator(val)
+                !iszero(n) && push!(denominators, abs(Int(n)))
+            end
+        end
+
+        local function data_storage(expr)
+            if expr isa Symbolics.Num
+                expr = Symbolics.unwrap(expr)
+            end
+            return hasfield(typeof(expr), :data) ? getfield(expr, :data) : nothing
+        end
+
+        local function walk_division_key(expr)
+            if expr isa Symbolics.Num
+                expr = Symbolics.unwrap(expr)
+            end
+            if Symbolics.SymbolicUtils.iscall(expr) && Symbolics.SymbolicUtils.operation(expr) === (/)
+                args = Symbolics.SymbolicUtils.arguments(expr)
+                length(args) >= 2 && push_divisor_denominator(args[2])
+                walk(args[1]; include_integers_local=false)
+            end
+        end
+
         local function walk(expr; include_integers_local=false)
             if expr isa Symbolics.Num
                 return walk(Symbolics.unwrap(expr); include_integers_local=include_integers_local)
             end
 
-            if Symbolics.SymbolicUtils.isadd(expr)
-                for coeff in symbolic_term_coefficients(expr)
-                    if coeff isa Symbolics.Num && Symbolics.SymbolicUtils.is_literal_number(coeff)
-                        coeff = Symbolics.SymbolicUtils.unwrap_const(coeff)
-                    end
-                    push_literal_denominator(coeff; include_integers_local=include_integers_local)
-                end
-            end
-
-            if Symbolics.SymbolicUtils.isdiv(expr)
-                if hasfield(typeof(expr), :num) && hasfield(typeof(expr), :den)
-                    walk(getfield(expr, :num); include_integers_local=false)
-                    walk(getfield(expr, :den); include_integers_local=true)
-                end
-                return
-            end
-
             if Symbolics.SymbolicUtils.is_literal_number(expr)
-                val = Symbolics.SymbolicUtils.unwrap_const(expr)
-                push_literal_denominator(val; include_integers_local=include_integers_local)
-                return
-            end
-
-            if hasfield(typeof(expr), :coeff)
-                coeff = getfield(expr, :coeff)
-                if coeff isa Symbolics.Num && Symbolics.SymbolicUtils.is_literal_number(coeff)
-                    coeff = Symbolics.SymbolicUtils.unwrap_const(coeff)
-                end
-                push_literal_denominator(coeff; include_integers_local=include_integers_local)
-            end
-
-            if hasfield(typeof(expr), :dict)
-                dict = getfield(expr, :dict)
-                try
-                    for (k, v) in dict
-                        walk(k; include_integers_local=include_integers_local)
-                        walk(v; include_integers_local=include_integers_local)
-                    end
-                catch
-                    # ignore non-iterable dict-like structures
-                end
-            end
-
-            ok, rat = Symbolics.SymbolicUtils.ratcoeff(expr)
-            if ok
-                if rat isa Rational
-                    push!(denominators, denominator(rat))
-                elseif include_integers_local && rat isa Integer
-                    push!(denominators, Int(rat))
-                end
+                push_literal_denominator(expr; include_integers_local=include_integers_local)
                 return
             end
 
@@ -185,7 +177,7 @@ function factor_out_denominator(A::AbstractArray)
                 push!(denominators, denominator(expr))
                 return
             elseif include_integers_local && expr isa Integer
-                push!(denominators, Int(expr))
+                push!(denominators, abs(Int(expr)))
                 return
             elseif expr isa Complex{Rational{Int}}
                 push!(denominators, denominator(real(expr)))
@@ -193,16 +185,53 @@ function factor_out_denominator(A::AbstractArray)
                 return
             elseif expr isa Number
                 return
-            elseif Symbolics.SymbolicUtils.iscall(expr)
+            end
+
+            storage = data_storage(expr)
+            if storage !== nothing && hasfield(typeof(storage), :dict)
+                if Symbolics.SymbolicUtils.isadd(expr)
+                    if hasfield(typeof(storage), :coeff)
+                        push_literal_denominator(getfield(storage, :coeff))
+                    end
+                    for (term, coeff) in getfield(storage, :dict)
+                        push_literal_denominator(coeff)
+                        walk_division_key(term)
+                    end
+                    return
+                elseif Symbolics.SymbolicUtils.ismul(expr)
+                    if hasfield(typeof(storage), :coeff)
+                        push_literal_denominator(getfield(storage, :coeff))
+                    end
+                    return
+                end
+            end
+
+            if Symbolics.SymbolicUtils.iscall(expr)
                 op = Symbolics.SymbolicUtils.operation(expr)
                 args = Symbolics.SymbolicUtils.arguments(expr)
                 if op === (/) && length(args) >= 2
                     walk(args[1]; include_integers_local=false)
-                    walk(args[2]; include_integers_local=true)
+                    push_divisor_denominator(args[2])
                     return
-                end
-                for arg in args
-                    walk(arg; include_integers_local=include_integers_local)
+                elseif op === (+)
+                    for arg in args
+                        walk(arg; include_integers_local=include_integers_local)
+                    end
+                    return
+                elseif op === (*)
+                    ok, rat = Symbolics.SymbolicUtils.ratcoeff(expr)
+                    if ok
+                        push_literal_denominator(rat; include_integers_local=include_integers_local)
+                    else
+                        for arg in args
+                            if unwrap_literal(arg) isa Number
+                                push_literal_denominator(arg; include_integers_local=include_integers_local)
+                            elseif Symbolics.SymbolicUtils.iscall(arg) && Symbolics.SymbolicUtils.operation(arg) === (/)
+                                walk_division_key(arg)
+                            end
+                        end
+                    end
+                    return
                 end
             end
         end
@@ -264,68 +293,6 @@ function factor_out_denominator(A::AbstractArray)
                 end
             end
         elseif x isa Symbolics.Num
-            sf = try
-                Symbolics.simplify_fractions(x)
-            catch
-                nothing
-            end
-            if sf !== nothing
-                den_sf = try
-                    Base.denominator(sf)
-                catch
-                    nothing
-                end
-                if den_sf isa Integer
-                    push!(denominators, Int(den_sf))
-                elseif den_sf isa Rational{Int}
-                    push!(denominators, denominator(den_sf))
-                elseif den_sf isa Symbolics.Num
-                    if Symbolics.SymbolicUtils.is_literal_number(den_sf)
-                        val = Symbolics.SymbolicUtils.unwrap_const(den_sf)
-                        if val isa Integer
-                            push!(denominators, Int(val))
-                        elseif val isa Rational
-                            push!(denominators, denominator(val))
-                        end
-                    else
-                        collect_symbolics_denoms(den_sf; include_integers=true)
-                    end
-                elseif den_sf !== nothing
-                    collect_symbolics_denoms(den_sf; include_integers=true)
-                end
-            end
-            den = try
-                Base.denominator(x)
-            catch
-                nothing
-            end
-            if den isa Integer
-                push!(denominators, Int(den))
-            elseif den isa Rational{Int}
-                push!(denominators, denominator(den))
-            elseif den isa Symbolics.Num
-                if Symbolics.SymbolicUtils.is_literal_number(den)
-                    val = Symbolics.SymbolicUtils.unwrap_const(den)
-                    if val isa Integer
-                        push!(denominators, Int(val))
-                    elseif val isa Rational
-                        push!(denominators, denominator(val))
-                    end
-                else
-                    collect_symbolics_denoms(den; include_integers=true)
-                end
-            elseif den !== nothing
-                collect_symbolics_denoms(den; include_integers=true)
-            end
-            expr = Symbolics.unwrap(x)
-            dens = try
-                Symbolics.SymbolicUtils.denominators(expr)
-            catch
-                Any[]
-            end
-            for d in dens
-                collect_symbolics_denoms(d; include_integers=true)
-            end
             collect_symbolics_denoms(x)
         elseif _is_pythoncall_py(x)
             den = try
@@ -922,6 +889,116 @@ function L_show_set(obj_group; setstyle=:Barray, arraystyle=:parray, color=nothi
     return style_wrapper(formatted_group, combined_options[:color])
 end
 
+function _lc_literal_number(x)
+    if x isa Symbolics.Num
+        return _lc_literal_number(Symbolics.unwrap(x))
+    end
+    if x isa Number
+        return x
+    end
+    if Symbolics.SymbolicUtils.is_literal_number(x)
+        return Symbolics.SymbolicUtils.unwrap_const(x)
+    end
+    return nothing
+end
+
+function _lc_is_negative_literal(x)
+    val = _lc_literal_number(x)
+    return val isa Real && val < 0
+end
+
+function _lc_is_zero_coeff(x, raw::AbstractString)
+    val = _lc_literal_number(x)
+    if val isa Number
+        return iszero(val)
+    end
+    if x isa Symbolics.Num || Symbolics.SymbolicUtils.issym(x) || Symbolics.SymbolicUtils.iscall(x)
+        return try
+            iszero(Symbolics.simplify(x))
+        catch
+            raw == "0"
+        end
+    end
+    if _is_pythoncall_py(x)
+        pc = _ensure_pythoncall()
+        return try
+            Base.invokelatest(pc.pyconvert, Bool, x == 0)
+        catch
+            raw == "0"
+        end
+    end
+    return raw == "0"
+end
+
+function _lc_symbolics_extract_negative(x)
+    if !(x isa Symbolics.Num || Symbolics.SymbolicUtils.issym(x) || Symbolics.SymbolicUtils.iscall(x))
+        return nothing
+    end
+    expr = x isa Symbolics.Num ? Symbolics.unwrap(x) : x
+    coeffs = Any[]
+    if hasfield(typeof(expr), :data)
+        data = getfield(expr, :data)
+        if hasfield(typeof(data), :dict)
+            append!(coeffs, values(getfield(data, :dict)))
+        end
+        if hasfield(typeof(data), :coeff)
+            coeff = getfield(data, :coeff)
+            if !iszero(coeff)
+                push!(coeffs, coeff)
+            end
+        end
+    else
+        coeffs = symbolic_term_coefficients(expr)
+    end
+    if !isempty(coeffs) && all(_lc_is_negative_literal, coeffs)
+        return -x
+    end
+    return nothing
+end
+
+function _lc_sympy_extract_negative(x)
+    _is_pythoncall_py(x) || return nothing
+    pc = _ensure_pythoncall()
+    return try
+        method = Base.invokelatest(pc.pygetattr, x, "could_extract_minus_sign")
+        can_extract = Base.invokelatest(pc.pyconvert, Bool, Base.invokelatest(pc.pycall, method))
+        can_extract ? -x : nothing
+    catch
+        nothing
+    end
+end
+
+function _lc_extract_negative(x)
+    val = _lc_literal_number(x)
+    if val isa Real && val < 0
+        return -x
+    end
+    neg = _lc_symbolics_extract_negative(x)
+    neg !== nothing && return neg
+    neg = _lc_sympy_extract_negative(x)
+    neg !== nothing && return neg
+    return nothing
+end
+
+function _lc_split_sign(x, raw0::AbstractString, inner)
+    neg_x = _lc_extract_negative(x)
+    if neg_x !== nothing
+        return (true, String(strip(inner(neg_x))), true)
+    end
+
+    r = String(strip(raw0))
+    if occursin(r"^-\\s*\\((.*)\\)$", r)
+        m = match(r"^-\\s*\\((.*)\\)$", r)
+        return (true, String(m.captures[1]), true)
+    end
+    if startswith(r, "-")
+        absraw = String(strip(r[2:end]))
+        single = !(occursin(r"\+", absraw) || occursin(r"(?<!^)-", absraw))
+        return (true, absraw, single)
+    end
+    return (false, r, false)
+end
+
 """
     L_show_lc(lcobj; kwargs...) -> String
 
@@ -967,7 +1044,7 @@ function L_show_lc(lcobj::LinearCombination; setstyle=:parray, arraystyle=:parra
     if opts[:sign_policy] === :plus
         terms = map(1:n) do i
             c = strip(inner(s[i]))
-            if opts[:drop_zero] && c == "0"
+            if opts[:drop_zero] && _lc_is_zero_coeff(s[i], c)
                 return nothing
             end
             c = (opts[:omit_one] && c == "1") ? "" :
@@ -987,27 +1064,13 @@ function L_show_lc(lcobj::LinearCombination; setstyle=:parray, arraystyle=:parra
             separator = opts[:plus])
     end
 
-    split_sign = function(raw0::AbstractString)
-        r = String(strip(raw0))
-        if occursin(r"^-\\s*\\((.*)\\)$", r)
-            m = match(r"^-\\s*\\((.*)\\)$", r)
-            return (true, String(m.captures[1]), true)
-        end
-        if startswith(r, "-")
-            absraw = String(strip(r[2:end]))
-            single = !(occursin(r"\\+", absraw) || occursin(r"(?<!^)-", absraw))
-            return (true, absraw, single)
-        end
-        return (false, r, false)
-    end
-
     pieces = Any[]
     for i in 1:n
         raw = String(strip(inner(s[i])))
-        if opts[:drop_zero] && raw == "0"
+        if opts[:drop_zero] && _lc_is_zero_coeff(s[i], raw)
             continue
         end
-        isneg, absraw, factorizable = split_sign(raw)
+        isneg, absraw, factorizable = _lc_split_sign(s[i], raw, inner)
         base = factorizable ? absraw : raw
 
         showtxt =
