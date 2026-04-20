@@ -152,7 +152,12 @@ end
             @test occursin("sp", latex_sp)
         end
 
+    end
+
+    @testset "Symbolic display policy" begin
         LAlatex.set_backend!(:symbolics)
+        @variables x y t n
+
         alpha = LAlatex.syms("α_1")
         latex_alpha = LAlatex.to_latex(alpha)
         @test occursin("\\alpha", latex_alpha) || occursin("α", latex_alpha)
@@ -174,7 +179,6 @@ end
         @test occursin("\\pi", latex_sin)
         @test occursin("3", latex_sin)
 
-        @variables t
         latex_exp = LAlatex.to_latex(exp(-3t))
         @test occursin("e^{", latex_exp)
         @test !occursin("\\begin{equation}", latex_exp)
@@ -183,7 +187,11 @@ end
         @test occursin("e^{", exp_vec_latex)
         @test !occursin("\\begin{equation}", exp_vec_latex)
 
-        @variables n
+        matrix_latex = LAlatex.L_show([x y; y x])
+        @test occursin("x", matrix_latex)
+        @test occursin("y", matrix_latex)
+        @test !occursin(" &  &", matrix_latex)
+
         rational_power = LAlatex.L_show((3//10)^n)
         @test occursin("\\left(\\frac{3}{10}\\right)^{n}", rational_power)
 
@@ -202,6 +210,86 @@ end
             rendered = LAlatex.to_latex(f(t))
             @test occursin(latex_name * "\\left(", rendered)
             @test !occursin("\\begin{equation}", rendered)
+        end
+
+        expr = (x + y)^2
+        expanded = LAlatex.L_show(expr; symopts=(expand=true,))
+        @test occursin("x^2", expanded) || occursin("x^{2}", expanded)
+
+        @test LAlatex.to_latex(-x) == "-x"
+        @test !occursin("-1", LAlatex.to_latex(-(x + y)))
+        lc_signed = LAlatex.L_show(LAlatex.lc([-(x + y), x - y, 1], [x y x + y]))
+        @test occursin("-  \\left", lc_signed)
+        @test occursin("+  \\left(-", lc_signed)
+        @test !occursin("\\left(1 ", lc_signed)
+        @test !occursin(" -  \\left(1 ", lc_signed)
+
+        symA = [1//2 x; 3//4 y]
+        factor, symA_out = LAlatex.factor_out_denominator(symA)
+        @test factor == 4
+        @test symA_out[1, 1] == 2
+        @test isequal(symA_out[1, 2], 4 * x)
+        @test symA_out[2, 1] == 3
+        @test isequal(symA_out[2, 2], 4 * y)
+
+        symB = LAlatex.mixed_matrix((1//2, x), ((1 + im)//3, y))
+        factorB, symB_out = LAlatex.factor_out_denominator(symB)
+        @test factorB == 6
+        @test symB_out[1, 1] == 3
+        @test isequal(symB_out[1, 2], 6 * x)
+        @test symB_out[2, 1] == 2 + 2im
+        @test isequal(symB_out[2, 2], 6 * y)
+
+        symC = LAlatex.mixed_matrix((x / 2, 1//3), (x, y))
+        factorC, symC_out = LAlatex.factor_out_denominator(symC)
+        @test factorC == 6
+        @test isequal(symC_out[1, 1], 3 * x)
+        @test symC_out[1, 2] == 2
+
+        @test sort(LAlatex._symbolics_denominators(x / 2 + 1//3)) == [2, 3]
+        @test LAlatex._symbolics_denominators((x + 1) / 2) == [2]
+        @test isempty(LAlatex._symbolics_denominators(x / (2y)))
+        @test isempty(LAlatex._symbolics_denominators((x / 2)^n))
+
+        p = (3//10)^n
+        @test isempty(LAlatex._symbolics_denominators(p))
+        power_matrix = [-6p p p; -21p 4p 3p; -21p 3p 4p]
+        factorP, power_out = LAlatex.factor_out_denominator(power_matrix)
+        @test factorP == 1
+        @test isequal(power_out, power_matrix)
+        power_latex = LAlatex.L_show("A10n=", power_matrix)
+        @test !occursin("\\frac{1}{10} \\left", power_latex)
+        @test occursin("\\left(\\frac{3}{10}\\right)^{n}", power_latex)
+
+        if ok
+            LAlatex.set_backend!(:sympy)
+            a_py, b_py = LAlatex.syms(:a, :b)
+            latex_py = LAlatex.L_show(a_py, " + ", b_py)
+            @test occursin("a", latex_py)
+            @test occursin("b", latex_py)
+
+            expr_py = (a_py + b_py)^2
+            expanded_py = LAlatex.L_show(expr_py; symopts=(expand=true,))
+            @test occursin("a", expanded_py)
+            @test occursin("b", expanded_py)
+
+            lc_py = LAlatex.L_show(LAlatex.lc([-(a_py + b_py), a_py - b_py, -a_py], [a_py b_py a_py]))
+            @test occursin("-  \\left", lc_py)
+            @test occursin("+  \\left", lc_py)
+            @test occursin("-  a", lc_py)
+
+            sympy = LAlatex.import_sympy()
+            @test strip(LAlatex.L_show(sympy.I)) == "\$i\$"
+            denoms_py = Int[]
+            LAlatex._push_sympy_denominator!(denoms_py, sympy.Rational(1, 3))
+            @test denoms_py == [3]
+            f_py = LAlatex.mixed_matrix((sympy.Rational(1, 2), a_py), (sympy.Rational(1, 3), b_py))
+            factor_py, out_py = LAlatex.factor_out_denominator(f_py)
+            @test factor_py == 6
+            @test PythonCall.pyconvert(Int, out_py[1, 1]) == 3
+            @test PythonCall.pyconvert(Int, out_py[2, 1]) == 2
+            @test LAlatex.to_latex(out_py[1, 2]) == LAlatex.to_latex(6 * a_py)
+            @test LAlatex.to_latex(out_py[2, 2]) == LAlatex.to_latex(6 * b_py)
         end
     end
 
@@ -250,10 +338,6 @@ end
 
         @variables x y
         @test LAlatex.L_show_core(x) == "x "
-        matrix_latex = LAlatex.L_show([x y; y x])
-        @test occursin("x", matrix_latex)
-        @test occursin("y", matrix_latex)
-        @test !occursin(" &  &", matrix_latex)
 
         mixed = LAlatex.mixed_matrix((1//2, x), ((1 + im)//3, 2*y))
         @test size(mixed) == (2, 2)
@@ -273,86 +357,5 @@ end
 
         joined = LAlatex.L_show((:x, :y); separator=L",\\quad")
         @test occursin("\\quad", joined)
-
-        expr = (x + y)^2
-        expanded = LAlatex.L_show(expr; symopts=(expand=true,))
-        @test occursin("x^2", expanded) || occursin("x^{2}", expanded)
-
-        @test LAlatex.to_latex(-x) == "-x"
-        @test !occursin("-1", LAlatex.to_latex(-(x + y)))
-        lc_signed = LAlatex.L_show(LAlatex.lc([-(x + y), x - y, 1], [x y x + y]))
-        @test occursin("-  \\left", lc_signed)
-        @test occursin("+  \\left(-", lc_signed)
-        @test !occursin("\\left(1 ", lc_signed)
-        @test !occursin(" -  \\left(1 ", lc_signed)
-
-        symA = [1//2 x; 3//4 y]
-        factor, symA_out = LAlatex.factor_out_denominator(symA)
-        @test factor == 4
-        @test symA_out[1, 1] == 2
-        @test isequal(symA_out[1, 2], 4 * x)
-        @test symA_out[2, 1] == 3
-        @test isequal(symA_out[2, 2], 4 * y)
-
-        symB = LAlatex.mixed_matrix((1//2, x), ((1 + im)//3, y))
-        factorB, symB_out = LAlatex.factor_out_denominator(symB)
-        @test factorB == 6
-        @test symB_out[1, 1] == 3
-        @test isequal(symB_out[1, 2], 6 * x)
-        @test symB_out[2, 1] == 2 + 2im
-        @test isequal(symB_out[2, 2], 6 * y)
-
-        symC = LAlatex.mixed_matrix((x / 2, 1//3), (x, y))
-        factorC, symC_out = LAlatex.factor_out_denominator(symC)
-        @test factorC == 6
-        @test isequal(symC_out[1, 1], 3 * x)
-        @test symC_out[1, 2] == 2
-
-        @variables n
-        @test sort(LAlatex._symbolics_denominators(x / 2 + 1//3)) == [2, 3]
-        @test LAlatex._symbolics_denominators((x + 1) / 2) == [2]
-        @test isempty(LAlatex._symbolics_denominators(x / (2y)))
-        @test isempty(LAlatex._symbolics_denominators((x / 2)^n))
-
-        p = (3//10)^n
-        @test isempty(LAlatex._symbolics_denominators(p))
-        power_matrix = [-6p p p; -21p 4p 3p; -21p 3p 4p]
-        factorP, power_out = LAlatex.factor_out_denominator(power_matrix)
-        @test factorP == 1
-        @test isequal(power_out, power_matrix)
-        power_latex = LAlatex.L_show("A10n=", power_matrix)
-        @test !occursin("\\frac{1}{10} \\left", power_latex)
-        @test occursin("\\left(\\frac{3}{10}\\right)^{n}", power_latex)
-
-        if ok
-            LAlatex.set_backend!(:sympy)
-            a_py, b_py = LAlatex.syms(:a, :b)
-            latex_py = LAlatex.L_show(a_py, " + ", b_py)
-            @test occursin("a", latex_py)
-            @test occursin("b", latex_py)
-
-            expr_py = (a_py + b_py)^2
-            expanded_py = LAlatex.L_show(expr_py; symopts=(expand=true,))
-            @test occursin("a", expanded_py)
-            @test occursin("b", expanded_py)
-
-            lc_py = LAlatex.L_show(LAlatex.lc([-(a_py + b_py), a_py - b_py, -a_py], [a_py b_py a_py]))
-            @test occursin("-  \\left", lc_py)
-            @test occursin("+  \\left", lc_py)
-            @test occursin("-  a", lc_py)
-
-            sympy = LAlatex.import_sympy()
-            @test strip(LAlatex.L_show(sympy.I)) == "\$i\$"
-            denoms_py = Int[]
-            LAlatex._push_sympy_denominator!(denoms_py, sympy.Rational(1, 3))
-            @test denoms_py == [3]
-            f_py = LAlatex.mixed_matrix((sympy.Rational(1, 2), a_py), (sympy.Rational(1, 3), b_py))
-            factor_py, out_py = LAlatex.factor_out_denominator(f_py)
-            @test factor_py == 6
-            @test PythonCall.pyconvert(Int, out_py[1, 1]) == 3
-            @test PythonCall.pyconvert(Int, out_py[2, 1]) == 2
-            @test LAlatex.to_latex(out_py[1, 2]) == LAlatex.to_latex(6 * a_py)
-            @test LAlatex.to_latex(out_py[2, 2]) == LAlatex.to_latex(6 * b_py)
-        end
     end
 end
