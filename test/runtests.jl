@@ -309,7 +309,13 @@ end
         @test symC_out[1, 2] == 2
 
         @variables n
+        @test sort(LAlatex._symbolics_denominators(x / 2 + 1//3)) == [2, 3]
+        @test LAlatex._symbolics_denominators((x + 1) / 2) == [2]
+        @test isempty(LAlatex._symbolics_denominators(x / (2y)))
+        @test isempty(LAlatex._symbolics_denominators((x / 2)^n))
+
         p = (3//10)^n
+        @test isempty(LAlatex._symbolics_denominators(p))
         power_matrix = [-6p p p; -21p 4p 3p; -21p 3p 4p]
         factorP, power_out = LAlatex.factor_out_denominator(power_matrix)
         @test factorP == 1
@@ -336,6 +342,10 @@ end
             @test occursin("-  a", lc_py)
 
             sympy = LAlatex.import_sympy()
+            @test strip(LAlatex.L_show(sympy.I)) == "\$i\$"
+            denoms_py = Int[]
+            LAlatex._push_sympy_denominator!(denoms_py, sympy.Rational(1, 3))
+            @test denoms_py == [3]
             f_py = LAlatex.mixed_matrix((sympy.Rational(1, 2), a_py), (sympy.Rational(1, 3), b_py))
             factor_py, out_py = LAlatex.factor_out_denominator(f_py)
             @test factor_py == 6

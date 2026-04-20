@@ -103,6 +103,163 @@ function factor_out_denominator(A)
     return 1, A
 end
 
+function _symbolics_unwrap_literal(val)
+    if val isa Symbolics.Num
+        val = Symbolics.unwrap(val)
+    end
+    if Symbolics.SymbolicUtils.is_literal_number(val)
+        return Symbolics.SymbolicUtils.unwrap_const(val)
+    end
+    return val
+end
+
+function _push_literal_denominator!(denominators::Vector{Int}, val; include_integers=false)
+    val = _symbolics_unwrap_literal(val)
+    if val isa Rational
+        push!(denominators, denominator(val))
+    elseif include_integers && val isa Integer
+        push!(denominators, abs(Int(val)))
+    elseif val isa Complex{Rational{Int}}
+        push!(denominators, denominator(real(val)))
+        push!(denominators, denominator(imag(val)))
+    end
+    return denominators
+end
+
+function _push_divisor_denominator!(denominators::Vector{Int}, val)
+    val = _symbolics_unwrap_literal(val)
+    if val isa Integer
+        push!(denominators, abs(Int(val)))
+    elseif val isa Rational
+        n = numerator(val)
+        !iszero(n) && push!(denominators, abs(Int(n)))
+    end
+    return denominators
+end
+
+function _symbolics_data_storage(expr)
+    if expr isa Symbolics.Num
+        expr = Symbolics.unwrap(expr)
+    end
+    return hasfield(typeof(expr), :data) ? getfield(expr, :data) : nothing
+end
+
+function _collect_symbolics_division_key_denominators!(denominators::Vector{Int}, expr)
+    if expr isa Symbolics.Num
+        expr = Symbolics.unwrap(expr)
+    end
+    if Symbolics.SymbolicUtils.iscall(expr) && Symbolics.SymbolicUtils.operation(expr) === (/)
+        args = Symbolics.SymbolicUtils.arguments(expr)
+        length(args) >= 2 && _push_divisor_denominator!(denominators, args[2])
+        _collect_symbolics_denominators!(denominators, args[1])
+    end
+    return denominators
+end
+
+function _collect_symbolics_denominators!(denominators::Vector{Int}, expr; include_integers=false)
+    if expr isa Symbolics.Num
+        return _collect_symbolics_denominators!(denominators, Symbolics.unwrap(expr); include_integers=include_integers)
+    end
+
+    if Symbolics.SymbolicUtils.is_literal_number(expr)
+        return _push_literal_denominator!(denominators, expr; include_integers=include_integers)
+    end
+
+    if expr isa Rational{Int}
+        push!(denominators, denominator(expr))
+        return denominators
+    elseif include_integers && expr isa Integer
+        push!(denominators, abs(Int(expr)))
+        return denominators
+    elseif expr isa Complex{Rational{Int}}
+        push!(denominators, denominator(real(expr)))
+        push!(denominators, denominator(imag(expr)))
+        return denominators
+    elseif expr isa Number
+        return denominators
+    end
+
+    storage = _symbolics_data_storage(expr)
+    if storage !== nothing && hasfield(typeof(storage), :dict)
+        if Symbolics.SymbolicUtils.isadd(expr)
+            if hasfield(typeof(storage), :coeff)
+                _push_literal_denominator!(denominators, getfield(storage, :coeff))
+            end
+            for (term, coeff) in getfield(storage, :dict)
+                _push_literal_denominator!(denominators, coeff)
+                _collect_symbolics_division_key_denominators!(denominators, term)
+            end
+            return denominators
+        elseif Symbolics.SymbolicUtils.ismul(expr)
+            if hasfield(typeof(storage), :coeff)
+                _push_literal_denominator!(denominators, getfield(storage, :coeff))
+            end
+            return denominators
+        end
+    end
+
+    if Symbolics.SymbolicUtils.iscall(expr)
+        op = Symbolics.SymbolicUtils.operation(expr)
+        args = Symbolics.SymbolicUtils.arguments(expr)
+        if op === (/) && length(args) >= 2
+            _collect_symbolics_denominators!(denominators, args[1])
+            _push_divisor_denominator!(denominators, args[2])
+            return denominators
+        elseif op === (+)
+            for arg in args
+                _collect_symbolics_denominators!(denominators, arg; include_integers=include_integers)
+            end
+            return denominators
+        elseif op === (*)
+            ok, rat = Symbolics.SymbolicUtils.ratcoeff(expr)
+            if ok
+                _push_literal_denominator!(denominators, rat; include_integers=include_integers)
+            else
+                for arg in args
+                    if _symbolics_unwrap_literal(arg) isa Number
+                        _push_literal_denominator!(denominators, arg; include_integers=include_integers)
+                    elseif Symbolics.SymbolicUtils.iscall(arg) && Symbolics.SymbolicUtils.operation(arg) === (/)
+                        _collect_symbolics_division_key_denominators!(denominators, arg)
+                    end
+                end
+            end
+            return denominators
+        end
+    end
+    return denominators
+end
+
+function _symbolics_denominators(expr; include_integers=false)
+    denominators = Int[]
+    _collect_symbolics_denominators!(denominators, expr; include_integers=include_integers)
+    return denominators
+end
+
+function _push_sympy_denominator!(denominators::Vector{Int}, x)
+    _is_pythoncall_py(x) || return denominators
+    den = try
+        sympy = import_sympy()
+        sympy.denom(x)
+    catch
+        nothing
+    end
+    den === nothing && return denominators
+
+    pc = _ensure_pythoncall()
+    pc === nothing && return denominators
+    den_jl = try
+        pc.pyconvert(Any, den)
+    catch
+        nothing
+    end
+    if den_jl isa Integer
+        push!(denominators, Int(den_jl))
+    elseif den_jl isa Rational{Int}
+        push!(denominators, denominator(den_jl))
+    end
+    return denominators
+end
+
 """
     factor_out_denominator(A::AbstractArray) -> (factor, A_factored)
 
@@ -112,131 +269,6 @@ entries return the original array with factor 1.
 """
 function factor_out_denominator(A::AbstractArray)
     denominators = Int[]
-    collect_symbolics_denoms = function(x; include_integers=false)
-        local function unwrap_literal(val)
-            if val isa Symbolics.Num
-                val = Symbolics.unwrap(val)
-            end
-            if Symbolics.SymbolicUtils.is_literal_number(val)
-                return Symbolics.SymbolicUtils.unwrap_const(val)
-            end
-            return val
-        end
-
-        local function push_literal_denominator(val; include_integers_local=false)
-            val = unwrap_literal(val)
-            if val isa Rational
-                push!(denominators, denominator(val))
-            elseif include_integers_local && val isa Integer
-                push!(denominators, abs(Int(val)))
-            elseif val isa Complex{Rational{Int}}
-                push!(denominators, denominator(real(val)))
-                push!(denominators, denominator(imag(val)))
-            end
-        end
-
-        local function push_divisor_denominator(val)
-            val = unwrap_literal(val)
-            if val isa Integer
-                push!(denominators, abs(Int(val)))
-            elseif val isa Rational
-                n = numerator(val)
-                !iszero(n) && push!(denominators, abs(Int(n)))
-            end
-        end
-
-        local function data_storage(expr)
-            if expr isa Symbolics.Num
-                expr = Symbolics.unwrap(expr)
-            end
-            return hasfield(typeof(expr), :data) ? getfield(expr, :data) : nothing
-        end
-
-        local function walk_division_key(expr)
-            if expr isa Symbolics.Num
-                expr = Symbolics.unwrap(expr)
-            end
-            if Symbolics.SymbolicUtils.iscall(expr) && Symbolics.SymbolicUtils.operation(expr) === (/)
-                args = Symbolics.SymbolicUtils.arguments(expr)
-                length(args) >= 2 && push_divisor_denominator(args[2])
-                walk(args[1]; include_integers_local=false)
-            end
-        end
-
-        local function walk(expr; include_integers_local=false)
-            if expr isa Symbolics.Num
-                return walk(Symbolics.unwrap(expr); include_integers_local=include_integers_local)
-            end
-
-            if Symbolics.SymbolicUtils.is_literal_number(expr)
-                push_literal_denominator(expr; include_integers_local=include_integers_local)
-                return
-            end
-
-            if expr isa Rational{Int}
-                push!(denominators, denominator(expr))
-                return
-            elseif include_integers_local && expr isa Integer
-                push!(denominators, abs(Int(expr)))
-                return
-            elseif expr isa Complex{Rational{Int}}
-                push!(denominators, denominator(real(expr)))
-                push!(denominators, denominator(imag(expr)))
-                return
-            elseif expr isa Number
-                return
-            end
-
-            storage = data_storage(expr)
-            if storage !== nothing && hasfield(typeof(storage), :dict)
-                if Symbolics.SymbolicUtils.isadd(expr)
-                    if hasfield(typeof(storage), :coeff)
-                        push_literal_denominator(getfield(storage, :coeff))
-                    end
-                    for (term, coeff) in getfield(storage, :dict)
-                        push_literal_denominator(coeff)
-                        walk_division_key(term)
-                    end
-                    return
-                elseif Symbolics.SymbolicUtils.ismul(expr)
-                    if hasfield(typeof(storage), :coeff)
-                        push_literal_denominator(getfield(storage, :coeff))
-                    end
-                    return
-                end
-            end
-
-            if Symbolics.SymbolicUtils.iscall(expr)
-                op = Symbolics.SymbolicUtils.operation(expr)
-                args = Symbolics.SymbolicUtils.arguments(expr)
-                if op === (/) && length(args) >= 2
-                    walk(args[1]; include_integers_local=false)
-                    push_divisor_denominator(args[2])
-                    return
-                elseif op === (+)
-                    for arg in args
-                        walk(arg; include_integers_local=include_integers_local)
-                    end
-                    return
-                elseif op === (*)
-                    ok, rat = Symbolics.SymbolicUtils.ratcoeff(expr)
-                    if ok
-                        push_literal_denominator(rat; include_integers_local=include_integers_local)
-                    else
-                        for arg in args
-                            if unwrap_literal(arg) isa Number
-                                push_literal_denominator(arg; include_integers_local=include_integers_local)
-                            elseif Symbolics.SymbolicUtils.iscall(arg) && Symbolics.SymbolicUtils.operation(arg) === (/)
-                                walk_division_key(arg)
-                            end
-                        end
-                    end
-                    return
-                end
-            end
-        end
-        walk(x; include_integers_local=include_integers)
-    end
     for x in A
         if x isa Rational{Int}
             push!(denominators, denominator(x))
@@ -247,73 +279,19 @@ function factor_out_denominator(A::AbstractArray)
             xr = real(x)
             xi = imag(x)
             if xr isa Symbolics.Num
-                collect_symbolics_denoms(xr)
+                _collect_symbolics_denominators!(denominators, xr)
             elseif _is_pythoncall_py(xr)
-                den = try
-                    sympy = import_sympy()
-                    sympy.denom(xr)
-                catch
-                    nothing
-                end
-                if den !== nothing
-                    pc = _ensure_pythoncall()
-                    den_jl = try
-                        pc.pyconvert(Any, den)
-                    catch
-                        nothing
-                    end
-                    if den_jl isa Integer
-                        push!(denominators, Int(den_jl))
-                    elseif den_jl isa Rational{Int}
-                        push!(denominators, denominator(den_jl))
-                    end
-                end
+                _push_sympy_denominator!(denominators, xr)
             end
             if xi isa Symbolics.Num
-                collect_symbolics_denoms(xi)
+                _collect_symbolics_denominators!(denominators, xi)
             elseif _is_pythoncall_py(xi)
-                den = try
-                    sympy = import_sympy()
-                    sympy.denom(xi)
-                catch
-                    nothing
-                end
-                if den !== nothing
-                    pc = _ensure_pythoncall()
-                    den_jl = try
-                        pc.pyconvert(Any, den)
-                    catch
-                        nothing
-                    end
-                    if den_jl isa Integer
-                        push!(denominators, Int(den_jl))
-                    elseif den_jl isa Rational{Int}
-                        push!(denominators, denominator(den_jl))
-                    end
-                end
+                _push_sympy_denominator!(denominators, xi)
             end
         elseif x isa Symbolics.Num
-            collect_symbolics_denoms(x)
+            _collect_symbolics_denominators!(denominators, x)
         elseif _is_pythoncall_py(x)
-            den = try
-                sympy = import_sympy()
-                sympy.denom(x)
-            catch
-                nothing
-            end
-            if den !== nothing
-                pc = _ensure_pythoncall()
-                den_jl = try
-                    pc.pyconvert(Any, den)
-                catch
-                    nothing
-                end
-                if den_jl isa Integer
-                    push!(denominators, Int(den_jl))
-                elseif den_jl isa Rational{Int}
-                    push!(denominators, denominator(den_jl))
-                end
-            end
+            _push_sympy_denominator!(denominators, x)
         elseif x isa Number || x isa Symbolics.Num
             # ok
         else
@@ -832,10 +810,7 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
                 # Fallback to sympy.latex below.
             end
         end
-        sympy = import_sympy()
-        latex_py = sympy.latex(obj)
-        latex_str = pc === nothing ? string(latex_py) : String(Base.invokelatest(pc.pyconvert, String, latex_py))
-        return style_wrapper(latex_str, color)
+        return style_wrapper(to_latex(obj), color)
     elseif obj isa Number || _is_pythoncall_py(obj)
         return L_show_number(symbolic_transform(obj; symopts...); color=color, number_formatter=number_formatter)
     end
