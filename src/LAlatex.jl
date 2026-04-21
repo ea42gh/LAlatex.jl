@@ -55,23 +55,25 @@ include("FormattingUtils.jl")
 include("Formatters.jl")
 include("MatrixUtils.jl")
 include("SymbolicDisplay.jl")
+include("DenominatorFactoring.jl")
 
 using .Backend
 using .SymbolicsBackendImpl: syms_symbolics, assume_symbolics!, symbolics_assumptions
 
-export @syms, syms, syms_sympy, @syms_sympy, import_sympy, get_backend, set_backend!, assume!, assumptions
+export get_backend, set_backend!
+export @syms, syms, syms_sympy, @syms_sympy, import_sympy, assume!, assumptions
+export symbolic_transform, symbolic_term_coefficients
+
+export to_latex, L_show, l_show, L_interp
 export to_html, show_html, pr, capture_output, show_side_by_side_html, show_side_by_side
+
+export mixed_matrix, @mixed_matrix, set, lc
+export apply_function, round_value, round_matrices, print_np_array_def, factor_out_denominator
+
 export bold_formatter, italic_formatter, color_formatter, conditional_color_formatter
 export highlight_large_values, underline_formatter, overline_formatter, combine_formatters
 export scientific_formatter, percentage_formatter, exponential_formatter
 export tril_formatter, block_formatter, diagonal_blocks_formatter, jordanblock_formatter, rowechelon_formatter
-export to_latex
-export mixed_matrix, @mixed_matrix
-export L_show, l_show, set, lc
-export L_interp, apply_function, round_value, round_matrices, print_np_array_def, factor_out_denominator
-export symbolic_transform
-export symbolic_term_coefficients
-export factor_out_denominator
 
 """
     Base.transpose(x::Char)

@@ -96,28 +96,50 @@ Examples:
 - `symbolic_term_coefficients((1//2) * x + 2x * y)` returns `[1//2, 2]`
 - `symbolic_term_coefficients(1 + 3x)` returns `[1, 3]`
 """
+function _symbolics_unwrap_num(expr)
+    return expr isa Symbolics.Num ? Symbolics.unwrap(expr) : expr
+end
+
+function _symbolics_storage(expr)
+    expr = _symbolics_unwrap_num(expr)
+    return hasfield(typeof(expr), :data) ? getfield(expr, :data) : expr
+end
+
+function _symbolics_storage_dict(storage)
+    return hasfield(typeof(storage), :dict) ? getfield(storage, :dict) : nothing
+end
+
+function _symbolics_storage_coeff(storage)
+    return hasfield(typeof(storage), :coeff) ? getfield(storage, :coeff) : nothing
+end
+
+function _symbolics_coefficients_from_storage(storage)
+    coeffs = Any[]
+    const_coeff = _symbolics_storage_coeff(storage)
+    if const_coeff !== nothing && !iszero(const_coeff)
+        push!(coeffs, const_coeff)
+    end
+    dict = _symbolics_storage_dict(storage)
+    if dict !== nothing
+        append!(coeffs, values(dict))
+    end
+    return coeffs
+end
+
 function symbolic_term_coefficients(expr)
-    if expr isa Symbolics.Num
-        return symbolic_term_coefficients(Symbolics.unwrap(expr))
+    expr = _symbolics_unwrap_num(expr)
+    storage = _symbolics_storage(expr)
+    dict = _symbolics_storage_dict(storage)
+    coeff = _symbolics_storage_coeff(storage)
+
+    # SymbolicUtils stores Add/Mul numeric coefficients separately from symbolic
+    # term keys. Keep that internal storage knowledge isolated here.
+    if Symbolics.SymbolicUtils.isadd(expr) && dict !== nothing
+        return _symbolics_coefficients_from_storage(storage)
     end
 
-    if Symbolics.SymbolicUtils.isadd(expr) && hasfield(typeof(expr), :dict)
-        coeffs = Any[]
-        if hasfield(typeof(expr), :coeff)
-            const_coeff = getfield(expr, :coeff)
-            if !iszero(const_coeff)
-                push!(coeffs, const_coeff)
-            end
-        end
-        dict = getfield(expr, :dict)
-        for (_, coeff) in dict
-            push!(coeffs, coeff)
-        end
-        return coeffs
-    end
-
-    if Symbolics.SymbolicUtils.ismul(expr) && hasfield(typeof(expr), :coeff)
-        return Any[getfield(expr, :coeff)]
+    if Symbolics.SymbolicUtils.ismul(expr) && coeff !== nothing
+        return Any[coeff]
     end
 
     if Symbolics.SymbolicUtils.iscall(expr) && Symbolics.SymbolicUtils.operation(expr) == (+)
