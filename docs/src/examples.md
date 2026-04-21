@@ -164,6 +164,8 @@ den, scaled = factor_out_denominator(F^2)
 display(l_show(scaled))
 ```
 
+For symbolic matrices, denominator factoring is coefficient-level. Literal rational entries, numeric symbolic coefficients, and explicit scalar divisions such as `x / 2` contribute denominators. Rationals inside symbolic powers or functions, such as `(3//10)^n`, stay inside the expression and are not factored out as a matrix-wide `1//10`. Non-scalar symbolic denominators such as `x / (2y)` also do not contribute a display-wide factor.
+
 ## Array styles
 
 Use `arraystyle` to select the LaTeX environment and delimiters:

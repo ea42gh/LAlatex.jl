@@ -191,6 +191,8 @@ end
         @test occursin("x", matrix_latex)
         @test occursin("y", matrix_latex)
         @test !occursin(" &  &", matrix_latex)
+        @test LAlatex._to_latex_scalar(x) == LAlatex.to_latex(x)
+        @test LAlatex._to_latex_matrix_entry(x) == LAlatex.to_latex(x)
 
         rational_power = LAlatex.L_show((3//10)^n)
         @test occursin("\\left(\\frac{3}{10}\\right)^{n}", rational_power)
@@ -280,9 +282,28 @@ end
 
             sympy = LAlatex.import_sympy()
             @test strip(LAlatex.L_show(sympy.I)) == "\$i\$"
+            @test LAlatex._to_latex_scalar(sympy.I) == LAlatex.to_latex(sympy.I)
+            @test LAlatex._to_latex_matrix_entry(2 * a_py) == LAlatex.to_latex(2 * a_py)
             denoms_py = Int[]
             LAlatex._push_sympy_denominator!(denoms_py, sympy.Rational(1, 3))
             @test denoms_py == [3]
+
+            factor_a_half, out_a_half = LAlatex.factor_out_denominator([a_py / 2 a_py])
+            @test factor_a_half == 2
+            @test LAlatex.to_latex(out_a_half[1, 1]) == LAlatex.to_latex(a_py)
+            @test LAlatex.to_latex(out_a_half[1, 2]) == LAlatex.to_latex(2 * a_py)
+
+            factor_sum_half, out_sum_half = LAlatex.factor_out_denominator([(a_py + 1) / 2 a_py])
+            @test factor_sum_half == 2
+            @test LAlatex.to_latex(out_sum_half[1, 1]) == LAlatex.to_latex(a_py + 1)
+            @test LAlatex.to_latex(out_sum_half[1, 2]) == LAlatex.to_latex(2 * a_py)
+
+            p_py = sympy.Rational(3, 10)^a_py
+            factor_power_py, out_power_py = LAlatex.factor_out_denominator([p_py a_py])
+            @test factor_power_py == 1
+            @test LAlatex.to_latex(out_power_py[1, 1]) == LAlatex.to_latex(p_py)
+            @test LAlatex.to_latex(out_power_py[1, 2]) == LAlatex.to_latex(a_py)
+
             f_py = LAlatex.mixed_matrix((sympy.Rational(1, 2), a_py), (sympy.Rational(1, 3), b_py))
             factor_py, out_py = LAlatex.factor_out_denominator(f_py)
             @test factor_py == 6

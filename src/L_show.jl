@@ -239,7 +239,7 @@ function _push_sympy_denominator!(denominators::Vector{Int}, x)
     _is_pythoncall_py(x) || return denominators
     den = try
         sympy = import_sympy()
-        sympy.denom(x)
+        sympy.denom(sympy.together(x))
     catch
         nothing
     end
@@ -266,6 +266,13 @@ end
 Factor out the least common denominator for rational entries in mixed arrays.
 Symbols and non-rational numeric entries are scaled by the factor; unsupported
 entries return the original array with factor 1.
+
+For symbolic entries, denominator factoring is intentionally coefficient-level:
+literal rational entries, numeric symbolic coefficients, and explicit scalar
+divisions such as `x / 2` contribute denominators. Denominators buried inside
+symbolic factors, powers, or functions, such as `(3//10)^n`, do not. Non-scalar
+symbolic denominators such as `x / (2y)` also do not contribute a display-wide
+factor.
 """
 function factor_out_denominator(A::AbstractArray)
     denominators = Int[]
@@ -501,8 +508,7 @@ end
 Render a number as LaTeX, with optional formatting and color.
 """
 function L_show_number(x; color=nothing, number_formatter=nothing)
-    formatted_x = number_formatter !== nothing ? number_formatter(x) : x
-    formatted = to_latex(formatted_x)
+    formatted = _to_latex_scalar(x; number_formatter=number_formatter)
     return style_wrapper(formatted, color)
 end
 
@@ -525,7 +531,7 @@ function format_matrix_row(A, i, per_element_style, row_dividers)
     row = join(
         [begin
             x = A[i, j]
-            formatted_x = to_latex(x)
+            formatted_x = _to_latex_matrix_entry(x)
             per_element_style !== nothing ? per_element_style(x, i, j, formatted_x) : formatted_x
         end for j in 1:size(A, 2)], " & "
     )
@@ -780,7 +786,7 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
     end
 
     if obj isa Symbol || obj isa Symbolics.Num
-        return style_wrapper(to_latex(symbolic_transform(obj; symopts...)) * " ", color)
+        return style_wrapper(_to_latex_scalar(symbolic_transform(obj; symopts...)) * " ", color)
     elseif _is_sympy_py(obj)
         pc = _pythoncall_module()
         if pc !== nothing
