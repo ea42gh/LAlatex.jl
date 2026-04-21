@@ -166,6 +166,23 @@ display(l_show(scaled))
 
 For symbolic matrices, denominator factoring is coefficient-level. Literal rational entries, numeric symbolic coefficients, and explicit scalar divisions such as `x / 2` contribute denominators. Rationals inside symbolic powers or functions, such as `(3//10)^n`, stay inside the expression and are not factored out as a matrix-wide `1//10`. Non-scalar symbolic denominators such as `x / (2y)` also do not contribute a display-wide factor.
 
+Complex symbolic entries are handled the same way. Denominators in symbolic real and imaginary coefficients contribute to the display-wide factor, and the scaled complex symbolic entries render without embedded equation environments:
+
+```julia
+@syms x y
+
+C = mixed_matrix(
+    (x / 2 + im * (y / 3), 1//5),
+    (x, y),
+)
+
+den, scaled = factor_out_denominator(C)
+@assert den == 30
+l_show("scaled=", scaled)
+```
+
+This factors out `1//30`; the first entry of `scaled` is rendered as `15 x + 10 y\mathit{i}`.
+
 ## Array styles
 
 Use `arraystyle` to select the LaTeX environment and delimiters:
