@@ -30,6 +30,22 @@ end
 
 @testset "LAlatex" begin
     LAlatex.set_backend!(:symbolics)
+    @testset "Public exports" begin
+        exported = names(LAlatex)
+        expected_exports = [
+            Symbol("@syms"), Symbol("@syms_sympy"), Symbol("@mixed_matrix"),
+            :syms, :syms_sympy, :import_sympy, :get_backend, :set_backend!,
+            :symbolic_transform, :symbolic_term_coefficients,
+            :to_latex, :L_show, :l_show, :L_interp, :to_html,
+            :mixed_matrix, :set, :lc, :factor_out_denominator,
+            :bold_formatter, :scientific_formatter, :tril_formatter,
+        ]
+        @test all(name -> name in exported, expected_exports)
+        @test :syms_symbolics ∉ exported
+        @test :assume_symbolics! ∉ exported
+        @test :symbolics_assumptions ∉ exported
+    end
+
     @testset "Symbolics default" begin
         LAlatex.set_backend!(:symbolics)
         @test LAlatex.get_backend() isa LAlatex.Backend.SymbolicsBackend
@@ -158,6 +174,61 @@ end
         LAlatex.set_backend!(:symbolics)
         @variables x y t n
 
+        @testset "Backend parity checklist" begin
+            sx, sy = x, y
+            symbolics_scalar = LAlatex.to_latex(sx + sy)
+            symbolics_matrix = LAlatex.L_show([sx sy; sy sx])
+            @test occursin("x", symbolics_scalar)
+            @test occursin("y", symbolics_scalar)
+            @test LAlatex._to_latex_matrix_entry(sx) == LAlatex.to_latex(sx)
+            @test occursin("x", symbolics_matrix)
+            @test occursin("y", symbolics_matrix)
+
+            symbolics_expanded = LAlatex.L_show((sx + sy)^2; symopts=(expand=true,))
+            @test occursin("x", symbolics_expanded)
+            @test occursin("y", symbolics_expanded)
+
+            symbolics_factor, symbolics_factored = LAlatex.factor_out_denominator([sx / 2 sx])
+            @test symbolics_factor == 2
+            @test isequal(symbolics_factored[1, 1], sx)
+            @test isequal(symbolics_factored[1, 2], 2sx)
+
+            symbolics_lc = LAlatex.L_show(LAlatex.lc([-(sx + sy), sx - sy], [sx sy]))
+            @test occursin("-  \\left", symbolics_lc)
+            @test occursin("+  \\left(-", symbolics_lc)
+
+            if ok
+                LAlatex.set_backend!(:sympy)
+                sympy = LAlatex.import_sympy()
+                px, py = LAlatex.syms(:px, :py)
+                sympy_scalar = LAlatex.to_latex(px + py)
+                sympy_matrix = LAlatex.L_show([px py; py px])
+                @test occursin("px", sympy_scalar)
+                @test occursin("py", sympy_scalar)
+                @test LAlatex._to_latex_matrix_entry(px) == LAlatex.to_latex(px)
+                @test occursin("px", sympy_matrix)
+                @test occursin("py", sympy_matrix)
+
+                sympy_expanded = LAlatex.L_show((px + py)^2; symopts=(expand=true,))
+                @test occursin("px", sympy_expanded)
+                @test occursin("py", sympy_expanded)
+
+                sympy_factor, sympy_factored = LAlatex.factor_out_denominator([px / 2 px])
+                @test sympy_factor == 2
+                @test LAlatex.to_latex(sympy_factored[1, 1]) == LAlatex.to_latex(px)
+                @test LAlatex.to_latex(sympy_factored[1, 2]) == LAlatex.to_latex(2 * px)
+
+                sympy_power = sympy.Rational(3, 10)^px
+                sympy_power_factor, _ = LAlatex.factor_out_denominator([sympy_power px])
+                @test sympy_power_factor == 1
+
+                sympy_lc = LAlatex.L_show(LAlatex.lc([-(px + py), px - py], [px py]))
+                @test occursin("-  \\left", sympy_lc)
+                @test occursin("+  \\left", sympy_lc)
+                LAlatex.set_backend!(:symbolics)
+            end
+        end
+
         alpha = LAlatex.syms("α_1")
         latex_alpha = LAlatex.to_latex(alpha)
         @test occursin("\\alpha", latex_alpha) || occursin("α", latex_alpha)
@@ -186,6 +257,7 @@ end
         exp_vec_latex = LAlatex.L_show(exp_vec)
         @test occursin("e^{", exp_vec_latex)
         @test !occursin("\\begin{equation}", exp_vec_latex)
+        @test exp_vec_latex == "\$\\left(\\begin{array}{r}\n6 - 5 e^{-3 t} \\\\\n18 - 19 e^{-3 t} \\\\\n18 - 16 e^{-3 t} \\\\\n\\end{array}\\right)\$\n"
 
         matrix_latex = LAlatex.L_show([x y; y x])
         @test occursin("x", matrix_latex)
@@ -196,6 +268,7 @@ end
 
         rational_power = LAlatex.L_show((3//10)^n)
         @test occursin("\\left(\\frac{3}{10}\\right)^{n}", rational_power)
+        @test rational_power == "\$\\left(\\frac{3}{10}\\right)^{n} \$\n"
 
         for (f, latex_name) in (
             (log, "\\log"),
@@ -225,6 +298,7 @@ end
         @test occursin("+  \\left(-", lc_signed)
         @test !occursin("\\left(1 ", lc_signed)
         @test !occursin(" -  \\left(1 ", lc_signed)
+        @test lc_signed == "\$ -  \\left(y + x\\right)\\left(\\begin{array}{r}\nx \\\\\n\\end{array}\\right)  +  \\left(-y + x\\right)\\left(\\begin{array}{r}\ny \\\\\n\\end{array}\\right)  +  \\left(\\begin{array}{r}\ny + x \\\\\n\\end{array}\\right) \$\n"
 
         symA = [1//2 x; 3//4 y]
         factor, symA_out = LAlatex.factor_out_denominator(symA)
@@ -262,6 +336,7 @@ end
         power_latex = LAlatex.L_show("A10n=", power_matrix)
         @test !occursin("\\frac{1}{10} \\left", power_latex)
         @test occursin("\\left(\\frac{3}{10}\\right)^{n}", power_latex)
+        @test power_latex == "\$\\text{A10n=} \\left(\\begin{array}{rrr}\n-6 \\left(\\frac{3}{10}\\right)^{n} & \\left(\\frac{3}{10}\\right)^{n} & \\left(\\frac{3}{10}\\right)^{n} \\\\\n-21 \\left(\\frac{3}{10}\\right)^{n} & 4 \\left(\\frac{3}{10}\\right)^{n} & 3 \\left(\\frac{3}{10}\\right)^{n} \\\\\n-21 \\left(\\frac{3}{10}\\right)^{n} & 3 \\left(\\frac{3}{10}\\right)^{n} & 4 \\left(\\frac{3}{10}\\right)^{n} \\\\\n\\end{array}\\right)\$\n"
 
         if ok
             LAlatex.set_backend!(:sympy)
