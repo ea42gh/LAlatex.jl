@@ -2,6 +2,7 @@ using Test
 using LaTeXStrings
 using PythonCall
 
+using BlockArrays
 using LAlatex
 using Symbolics
 
@@ -322,6 +323,41 @@ end
         @test isequal(symC_out[1, 1], 3 * x)
         @test symC_out[1, 2] == 2
 
+        complex_symbolic_matrix = LAlatex.mixed_matrix((x / 2 + im * (y / 3), 1//5), (x, y))
+        factor_complex_symbolic, out_complex_symbolic = LAlatex.factor_out_denominator(complex_symbolic_matrix)
+        @test factor_complex_symbolic == 30
+        complex_symbolic_latex = LAlatex.L_show(out_complex_symbolic)
+        @test !occursin("\\begin{equation}", complex_symbolic_latex)
+        @test occursin("15 x", complex_symbolic_latex)
+        @test occursin("10 y", complex_symbolic_latex)
+        @test occursin("\\mathit{i}", complex_symbolic_latex)
+
+        empty_rational_vector = Rational{Int}[]
+        factor_empty_vector, out_empty_vector = LAlatex.factor_out_denominator(empty_rational_vector)
+        @test factor_empty_vector == 1
+        @test out_empty_vector === empty_rational_vector
+
+        empty_rational_matrix = Matrix{Rational{Int}}(undef, 0, 2)
+        factor_empty_matrix, out_empty_matrix = LAlatex.factor_out_denominator(empty_rational_matrix)
+        @test factor_empty_matrix == 1
+        @test out_empty_matrix === empty_rational_matrix
+        @test size(out_empty_matrix) == (0, 2)
+
+        big_rational_vector = [big(1)//big(2), big(2)//big(3)]
+        factor_big_vector, out_big_vector = LAlatex.factor_out_denominator(big_rational_vector)
+        @test factor_big_vector == big(6)
+        @test out_big_vector == BigInt[3, 4]
+
+        big_rational_matrix = [big(1)//big(2) big(1)//big(5); big(2)//big(3) big(3)//big(4)]
+        factor_big_matrix, out_big_matrix = LAlatex.factor_out_denominator(big_rational_matrix)
+        @test factor_big_matrix == big(60)
+        @test out_big_matrix == BigInt[30 12; 40 45]
+
+        big_complex_vector = Complex{Rational{BigInt}}[big(1)//big(2) + im * (big(1)//big(3))]
+        factor_big_complex, out_big_complex = LAlatex.factor_out_denominator(big_complex_vector)
+        @test factor_big_complex == big(6)
+        @test out_big_complex == Complex{BigInt}[3 + 2im]
+
         @test sort(LAlatex._symbolics_denominators(x / 2 + 1//3)) == [2, 3]
         @test LAlatex._symbolics_denominators((x + 1) / 2) == [2]
         @test isempty(LAlatex._symbolics_denominators(x / (2y)))
@@ -337,6 +373,20 @@ end
         @test !occursin("\\frac{1}{10} \\left", power_latex)
         @test occursin("\\left(\\frac{3}{10}\\right)^{n}", power_latex)
         @test power_latex == "\$\\text{A10n=} \\left(\\begin{array}{rrr}\n-6 \\left(\\frac{3}{10}\\right)^{n} & \\left(\\frac{3}{10}\\right)^{n} & \\left(\\frac{3}{10}\\right)^{n} \\\\\n-21 \\left(\\frac{3}{10}\\right)^{n} & 4 \\left(\\frac{3}{10}\\right)^{n} & 3 \\left(\\frac{3}{10}\\right)^{n} \\\\\n-21 \\left(\\frac{3}{10}\\right)^{n} & 3 \\left(\\frac{3}{10}\\right)^{n} & 4 \\left(\\frac{3}{10}\\right)^{n} \\\\\n\\end{array}\\right)\$\n"
+
+        block_matrix = BlockArray([1//2 1//3; 1//4 1//5], [1, 1], [1, 1])
+        factor_block_matrix, out_block_matrix = LAlatex.factor_out_denominator(block_matrix)
+        @test factor_block_matrix == 60
+        @test out_block_matrix isa BlockArray
+        @test axes(out_block_matrix) == axes(block_matrix)
+        @test Array(out_block_matrix) == [30 20; 15 12]
+
+        block_vector = BlockArray([1//2, 1//3, 1//4], [1, 2])
+        factor_block_vector, out_block_vector = LAlatex.factor_out_denominator(block_vector)
+        @test factor_block_vector == 12
+        @test out_block_vector isa BlockArray
+        @test axes(out_block_vector) == axes(block_vector)
+        @test Array(out_block_vector) == [6, 4, 3]
 
         if ok
             LAlatex.set_backend!(:sympy)

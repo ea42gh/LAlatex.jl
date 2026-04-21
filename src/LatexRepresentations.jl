@@ -178,6 +178,8 @@ function _to_latex_scalar(x; number_formatter=nothing)
         return _to_latex_sympy(x)
     elseif x isa Symbolics.Num
         return _to_latex_symbolics(x; number_formatter=number_formatter)
+    elseif x isa Complex
+        return _to_latex_complex(x; number_formatter=number_formatter)
     end
 
     formatted_x = number_formatter !== nothing && x isa Number ? number_formatter(x) : x
@@ -241,32 +243,32 @@ end
 """
     to_latex(x::Complex; number_formatter=nothing) -> String
 """
-function to_latex(x::Complex{T}; number_formatter=nothing) where T
+function _to_latex_complex(x::Complex; number_formatter=nothing)
     x_real = real(x)
     x_imag = imag(x)
     real_numeric = x_real isa Number && !(x_real isa Symbolics.Num)
     imag_numeric = x_imag isa Number && !(x_imag isa Symbolics.Num)
 
     if imag_numeric && x_imag == 0
-        return to_latex(x_real, number_formatter=number_formatter)
+        return _to_latex_scalar(x_real, number_formatter=number_formatter)
     elseif real_numeric && x_real == 0
         if imag_numeric && x_imag == 1
             return "\\mathit{i}"
         elseif imag_numeric && x_imag == -1
             return "-\\mathit{i}"
         else
-            return to_latex(x_imag, number_formatter=number_formatter) * "\\mathit{i}"
+            return _to_latex_scalar(x_imag, number_formatter=number_formatter) * "\\mathit{i}"
         end
     else
-        xr = to_latex(x_real; number_formatter=number_formatter)
+        xr = _to_latex_scalar(x_real; number_formatter=number_formatter)
         sgn = "+"
         coeff = ""
         if imag_numeric
             sgn = x_imag < 0 ? "-" : "+"
             axi = abs(x_imag)
-            coeff = (axi == 1 ? "" : to_latex(axi; number_formatter=number_formatter))
+            coeff = (axi == 1 ? "" : _to_latex_scalar(axi; number_formatter=number_formatter))
         else
-            imag_str = strip(to_latex(x_imag; number_formatter=number_formatter))
+            imag_str = strip(_to_latex_scalar(x_imag; number_formatter=number_formatter))
             if startswith(imag_str, "-")
                 sgn = "-"
                 imag_str = strip(imag_str[2:end])
@@ -276,6 +278,10 @@ function to_latex(x::Complex{T}; number_formatter=nothing) where T
         xi = coeff * "\\mathit{i}"
         return xr * sgn * xi
     end
+end
+
+function to_latex(x::Complex{T}; number_formatter=nothing) where T
+    return _to_latex_complex(x; number_formatter=number_formatter)
 end
 
 """
