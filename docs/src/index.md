@@ -20,6 +20,7 @@ See the Installation page for Julia + SymPy setup details.
 See the Quickstart page for a minimal setup and first render.
 
 See the Examples page for backend switching, assumptions, HTML helpers, and LaTeX helpers.
+See the Display policy page for `cases` and `aligned` rendering rules.
 
 ## Gallery
 

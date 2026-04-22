@@ -22,6 +22,7 @@ makedocs(;
         "Installation" => "installation.md",
         "Quickstart" => "quickstart.md",
         "Python interop" => "python-interop.md",
+        "Display policy" => "display-policy.md",
         "Compatibility" => "compatibility.md",
         "FAQ" => "faq.md",
         "Examples" => "examples.md",
