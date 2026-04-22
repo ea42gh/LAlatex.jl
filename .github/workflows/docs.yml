@@ -37,4 +37,5 @@ jobs:
           JULIA_CONDAPKG_BACKEND: Null
           JULIA_PYTHONCALL_EXE: python
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        # docs/make.jl runs makedocs, including doctests, before deploydocs.
         run: julia --project=docs -e 'using Pkg; Pkg.instantiate(); include("docs/make.jl")'

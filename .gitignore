@@ -17,7 +17,7 @@ Manifest*.toml
 *.prof
 
 # Pkg scratch / logs
-.CondPkg/
+.CondaPkg/
 .julia/
 logs/
 
@@ -45,4 +45,3 @@ env/
 *~
 .DS_Store
 Thumbs.db
-

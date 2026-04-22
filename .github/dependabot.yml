@@ -1,4 +1,5 @@
 # https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+# GitHub Actions updates are handled here; Julia package compat updates are handled by CompatHelper.yml.
 version: 2
 updates:
   - package-ecosystem: "github-actions"
