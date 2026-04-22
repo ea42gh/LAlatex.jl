@@ -67,7 +67,7 @@ export symbolic_transform, symbolic_term_coefficients
 export to_latex, L_show, l_show, L_interp
 export to_html, show_html, pr, capture_output, show_side_by_side_html, show_side_by_side
 
-export mixed_matrix, @mixed_matrix, set, lc
+export mixed_matrix, @mixed_matrix, set, lc, cases
 export apply_function, round_value, round_matrices, print_np_array_def, factor_out_denominator
 
 export bold_formatter, italic_formatter, color_formatter, conditional_color_formatter

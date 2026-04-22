@@ -96,6 +96,24 @@ vectors = [x y x + y]
 l_show(lc(coeffs, vectors; sign_policy=:signed))
 ```
 
+## Cases and piecewise displays
+
+Use `cases` for piecewise definitions. Each entry can be written as
+`value => condition` or `(value, condition)`, and each value is rendered with
+the same display policy as `L_show`.
+
+```julia
+@syms x y
+
+L_show(
+    "T(v) = ",
+    cases(
+        [x, 0] => L"v \in \operatorname{span}\{e_1\}",
+        ([0, y], "otherwise"),
+    ),
+)
+```
+
 ## Formatter helpers
 
 ```julia

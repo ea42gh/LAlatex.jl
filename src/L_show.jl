@@ -350,6 +350,26 @@ function lc(s, X; kwargs...)
 end
 
 """
+    Cases(entries, options)
+
+Container for LaTeX `cases` rendering in `L_show`.
+"""
+struct Cases
+    entries::Tuple
+    options::NamedTuple
+end
+
+"""
+    cases(entries...; kwargs...) -> Cases
+
+Create a piecewise/cases display. Each entry may be a two-tuple
+`(value, condition)` or a pair `value => condition`.
+"""
+function cases(entries...; kwargs...)
+    return Cases(entries, (; kwargs...))
+end
+
+"""
     Group(entries, options)
 
 Container for grouped LaTeX rendering.
@@ -394,6 +414,12 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
         return L_show_lc(obj; setstyle=setstyle, arraystyle=arraystyle, color=color,
                          number_formatter=number_formatter, per_element_style=per_element_style,
                          factor_out=factor_out, symopts=symopts)
+    end
+
+    if obj isa Cases
+        return L_show_cases(obj; arraystyle=arraystyle, color=color,
+                            number_formatter=number_formatter, per_element_style=per_element_style,
+                            factor_out=factor_out, symopts=symopts)
     end
 
     if obj isa Tuple && isempty(obj)
@@ -559,6 +585,57 @@ function L_show_set(obj_group; setstyle=:Barray, arraystyle=:parray, color=nothi
 
     formatted_group = LaTeXString("$(left_delim) " * joined_latex * " $(right_delim)")
     return style_wrapper(formatted_group, combined_options[:color])
+end
+
+function _case_entry_parts(entry)
+    if entry isa Pair
+        return first(entry), last(entry)
+    elseif entry isa Tuple && length(entry) == 2
+        return entry[1], entry[2]
+    end
+    throw(ArgumentError("cases entries must be pairs or two-tuples; got $(typeof(entry))"))
+end
+
+"""
+    L_show_cases(case_group; kwargs...) -> String
+
+Render a `Cases` group as a LaTeX `cases` environment.
+"""
+function L_show_cases(case_group::Cases; arraystyle=:parray, color=nothing,
+                      number_formatter=nothing, per_element_style=nothing,
+                      factor_out=true, symopts=NamedTuple())
+    symopts = normalize_symopts(symopts)
+    combined_options = merge(Dict(
+        :arraystyle => arraystyle,
+        :color => color,
+        :number_formatter => number_formatter,
+        :per_element_style => per_element_style,
+        :factor_out => factor_out,
+        :symopts => symopts,
+    ), Dict(pairs(case_group.options)))
+    combined_options[:symopts] = normalize_symopts(combined_options[:symopts])
+
+    rows = map(case_group.entries) do entry
+        value, condition = _case_entry_parts(entry)
+        value_latex = strip(L_show_core(value;
+            arraystyle=combined_options[:arraystyle],
+            color=nothing,
+            number_formatter=combined_options[:number_formatter],
+            per_element_style=combined_options[:per_element_style],
+            factor_out=combined_options[:factor_out],
+            symopts=combined_options[:symopts]))
+        condition_latex = strip(L_show_core(condition;
+            arraystyle=combined_options[:arraystyle],
+            color=nothing,
+            number_formatter=combined_options[:number_formatter],
+            per_element_style=combined_options[:per_element_style],
+            factor_out=combined_options[:factor_out],
+            symopts=combined_options[:symopts]))
+        "$value_latex, & $condition_latex \\\\"
+    end
+
+    formatted_cases = "\\begin{cases}\n" * join(rows, "\n") * "\n\\end{cases}"
+    return style_wrapper(formatted_cases, combined_options[:color])
 end
 
 function _lc_literal_number(x)

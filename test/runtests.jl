@@ -38,7 +38,7 @@ end
             :syms, :syms_sympy, :import_sympy, :get_backend, :set_backend!,
             :symbolic_transform, :symbolic_term_coefficients,
             :to_latex, :L_show, :l_show, :L_interp, :to_html,
-            :mixed_matrix, :set, :lc, :factor_out_denominator,
+            :mixed_matrix, :set, :lc, :cases, :factor_out_denominator,
             :bold_formatter, :scientific_formatter, :tril_formatter,
         ]
         @test all(name -> name in exported, expected_exports)
@@ -542,6 +542,22 @@ end
         expanded_group = LAlatex.L_show(LAlatex.set((x + y)^2; symopts=(expand=true,)))
         @test !occursin("\\left(y + x\\right)^{2}", expanded_group)
         @test occursin("x^{2}", expanded_group) || occursin("x^2", expanded_group)
+
+        cases_latex = LAlatex.L_show(
+            "T(v) = ",
+            LAlatex.cases(
+                [x, 0] => L"v \in \operatorname{span}\{e_1\}",
+                ([0, y], "otherwise"),
+            ),
+        )
+        @test occursin("\\begin{cases}", cases_latex)
+        @test occursin("\\left(\\begin{array}{r}\nx \\\\\n0 \\\\\n\\end{array}\\right), & v \\in \\operatorname{span}\\{e_1\\}", cases_latex)
+        @test occursin("\\text{otherwise}", cases_latex)
+
+        expanded_cases = LAlatex.L_show(LAlatex.cases((x + y)^2 => L"x > 0"); symopts=(expand=true,))
+        @test !occursin("\\left(y + x\\right)^{2}", expanded_cases)
+        @test occursin("x^{2}", expanded_cases) || occursin("x^2", expanded_cases)
+        @test_throws ArgumentError LAlatex.L_show(LAlatex.cases(x))
 
         @test_throws ArgumentError LAlatex.L_show(LAlatex.lc([1], [x y]))
         @test_throws ArgumentError LAlatex.L_show(LAlatex.lc([1, 2, 3], [x y]))
