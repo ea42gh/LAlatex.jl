@@ -28,4 +28,7 @@
 
 ## Notes
 
-- For Symbolics + complex rationals, use `mixed_matrix` or `@mixed_matrix`.
+- For homogeneous numeric or symbolic matrices, use ordinary Julia matrix
+  literals.
+- For heterogeneous symbolic/numeric matrices that fail during construction,
+  use `mixed_matrix` or `@mixed_matrix` to bypass matrix-literal promotion.

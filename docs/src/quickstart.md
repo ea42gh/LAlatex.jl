@@ -27,11 +27,23 @@ L_show(a^2 + 2a + 1)
 
 ## Mixed matrices
 
+Most matrices should use ordinary Julia literals. Reach for `mixed_matrix` only
+when Julia cannot construct the matrix because it tries to promote mixed entry
+types first.
+
 ```julia
 set_backend!(:symbolics)
 x, y = syms(:x, :y)
+
+# This preserves the exact entries without type promotion.
 M = mixed_matrix((1//2, x), ((1 + im)//3, 2*y))
 L_show(M)
+```
+
+The macro form keeps matrix-literal syntax while avoiding promotion:
+
+```julia
+M = @mixed_matrix [1//2 x; (1 + im)//3 2*y]
 ```
 
 ## Python interop (optional)

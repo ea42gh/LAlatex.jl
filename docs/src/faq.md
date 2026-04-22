@@ -11,7 +11,19 @@ pyimport("sys").executable
 
 ## Symbolics + complex rationals error
 
-Use `mixed_matrix` or `@mixed_matrix` to avoid ambiguous `promote_rule` errors.
+This usually happens while Julia is constructing a matrix literal, before
+LAlatex can render it. Julia tries to promote every entry to one common element
+type, which can fail for mixtures such as Symbolics entries, SymPy entries,
+exact rationals, and complex rationals.
+
+Use `mixed_matrix` or `@mixed_matrix` as a targeted construction helper:
+
+```julia
+F = mixed_matrix((1//2, x), ((1 + im)//3, 2*y))
+G = @mixed_matrix [1//2 x; (1 + im)//3 2*y]
+```
+
+For homogeneous numeric or symbolic matrices, prefer ordinary Julia literals.
 
 ## Text vs math font
 

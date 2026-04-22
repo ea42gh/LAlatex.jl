@@ -1,7 +1,13 @@
 """
     mixed_matrix(rows::Tuple...) -> Matrix{Any}
 
-Build a matrix from row tuples without triggering type promotion across backends.
+Build a heterogeneous matrix from row tuples without triggering Julia's normal
+matrix-literal type promotion.
+
+Use this when a normal matrix literal fails or coerces entries while mixing
+symbolic objects with exact rationals, complex rationals, or objects from
+different symbolic backends. For homogeneous numeric or symbolic matrices,
+prefer ordinary Julia matrix literals.
 
 Examples:
     mixed_matrix((1//2, x), ((1 + im)//3, 2*y))
@@ -27,7 +33,11 @@ end
 """
     mixed_matrix(A::AbstractMatrix) -> Matrix{Any}
 
-Convert an existing matrix to `Matrix{Any}` to avoid backend promotion issues.
+Convert an existing matrix to `Matrix{Any}` after construction.
+
+This preserves the current entries but cannot prevent promotion that already
+happened while constructing the original matrix. Use row tuples or
+`@mixed_matrix` when construction itself is the problem.
 """
 function mixed_matrix(A::AbstractMatrix)
     return Matrix{Any}(A)
@@ -37,6 +47,10 @@ end
     @mixed_matrix [a b; c d]
 
 Construct a `Matrix{Any}` from a matrix literal without triggering type promotion.
+
+This keeps matrix-literal syntax for heterogeneous symbolic/numeric entries:
+
+    @mixed_matrix [1//2 x; (1 + im)//3 2*y]
 """
 macro mixed_matrix(expr)
     rows = LAlatex._mixed_matrix_rows(expr)

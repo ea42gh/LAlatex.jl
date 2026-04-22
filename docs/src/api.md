@@ -8,8 +8,12 @@
 - `import_sympy` for explicit SymPy import and diagnostics
 - `mixed_matrix`, `@mixed_matrix`
 
-Note: use `mixed_matrix`/`@mixed_matrix` when mixing Symbolics/SymPy symbols with complex rationals,
-otherwise Julia may throw an ambiguous `promote_rule` error when constructing a matrix literal.
+Note: `mixed_matrix` and `@mixed_matrix` are construction helpers for
+heterogeneous symbolic/numeric matrices. Use them when an ordinary Julia matrix
+literal fails or coerces entries while mixing Symbolics/SymPy objects with exact
+rationals, complex rationals, or objects from different symbolic backends. For
+homogeneous numeric or symbolic matrices, ordinary Julia matrix literals are
+preferred.
 
 ## Assumptions (Symbolics metadata)
 

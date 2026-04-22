@@ -40,8 +40,18 @@ q = syms_sympy(:q)
 
 ## Mixed matrices
 
-Use `mixed_matrix` or `@mixed_matrix` to avoid promotion errors when mixing
-Symbolics/SymPy symbols with complex rationals.
+Use ordinary Julia matrix literals for homogeneous numeric or symbolic matrices:
+
+```julia
+A = [1 2; 3 4]
+B = [x y; y x]
+```
+
+Use `mixed_matrix` or `@mixed_matrix` only when construction itself is the
+problem. These helpers build a `Matrix{Any}` directly, so Julia does not try to
+promote every entry to one common element type before LAlatex can render it.
+This is useful when mixing Symbolics/SymPy objects with exact rationals, complex
+rationals, or objects from different symbolic backends.
 
 ```julia
 set_backend!(:symbolics)
@@ -56,6 +66,10 @@ Common pitfall:
 # This fails because Julia tries to promote element types first:
 F_bad = [1//2 x; (1 + im)//3 2*y]
 ```
+
+`mixed_matrix(A::AbstractMatrix)` can convert an already-built matrix to
+`Matrix{Any}`, but it cannot undo promotion that happened while constructing
+`A`. If the literal itself fails, use row tuples or `@mixed_matrix`.
 
 ## HTML helpers
 
