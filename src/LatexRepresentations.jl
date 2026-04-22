@@ -173,6 +173,15 @@ function _to_latex_sympy(x)
     return s
 end
 
+function _formatted_number_to_latex(x)
+    if x isa LaTeXString
+        return strip_math_delims(string(x))
+    elseif x isa AbstractString
+        return strip_math_delims(x)
+    end
+    return nothing
+end
+
 function _to_latex_scalar(x; number_formatter=nothing)
     if _is_pythoncall_py(x)
         return _to_latex_sympy(x)
@@ -183,6 +192,9 @@ function _to_latex_scalar(x; number_formatter=nothing)
     end
 
     formatted_x = number_formatter !== nothing && x isa Number ? number_formatter(x) : x
+    formatted_latex = _formatted_number_to_latex(formatted_x)
+    formatted_latex !== nothing && return formatted_latex
+
     s = strip_math_delims(latexify(formatted_x))
     return isempty(s) ? string(formatted_x) : s
 end
@@ -289,6 +301,9 @@ end
 """
 function to_latex(x::Float64; number_formatter=nothing)
     x = number_formatter !== nothing ? number_formatter(x) : x
+    formatted_latex = _formatted_number_to_latex(x)
+    formatted_latex !== nothing && return formatted_latex
+
     str_x = string(x)
     if occursin('e', str_x)
         base, exponent = split(str_x, 'e')

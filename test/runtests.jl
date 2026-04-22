@@ -486,6 +486,12 @@ end
         @test LAlatex.exponential_formatter(10000.0; digits=1) == "1.0e4.0"
         @test LAlatex.exponential_formatter(12.345; digits=2) == 12.34
 
+        bold_number = LAlatex.L_show("42 bold -> ", 42; number_formatter=x -> "\\textbf{$x}")
+        @test bold_number == "\$\\text{42 bold -> } \\textbf{42}\$\n"
+
+        bold_float = LAlatex.L_show(4.2; number_formatter=x -> LaTeXString("\\mathbf{$x}"))
+        @test bold_float == "\$\\mathbf{4.2}\$\n"
+
         @test LAlatex.tril_formatter(1, 2, 1, "x") == "\\textcolor{red}{x}"
         @test LAlatex.block_formatter(1, 2, 2, "x"; r1=2, r2=3, c1=2, c2=3) == "\\textcolor{red}{x}"
         @test LAlatex.block_formatter(1, 1, 1, "x"; r1=2, r2=3, c1=2, c2=3) == "x"

@@ -144,8 +144,17 @@ L_show(
 
 The symbolic expression is expanded before the aligned row is rendered.
 
+`number_formatter` may return either a value for normal conversion or a raw
+LaTeX fragment:
+
+```julia
+L_show("42 bold -> ", 42; number_formatter=x -> "\\textbf{$x}")
+```
+
+Because the formatter returns a string, `\\textbf{42}` is inserted as LaTeX
+instead of being parsed as a Julia expression.
+
 ## Invalid rows
 
 `cases` entries must be pairs or two-tuples. `aligned` rows must be pairs,
 tuples, or vectors, and empty rows are rejected.
-
