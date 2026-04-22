@@ -55,6 +55,8 @@ See the Display policy page for `cases` and `aligned` rendering rules.
 
 - `docs/src/notebooks/LAlatex_basics.ipynb`: project setup, backend switching, assumptions, HTML helpers, and formatters.
 - `docs/src/notebooks/LAlatex_L_show_Guide.ipynb`: detailed `L_show`/`l_show` usage across scalars, strings, matrices, block arrays, and per-element styling.
+- `docs/src/notebooks/LAlatex_cases_Guide.ipynb`: focused guide to `cases(...)` syntax, row policy, and propagated display options.
+- `docs/src/notebooks/LAlatex_aligned_Guide.ipynb`: focused guide to `aligned(...)` row forms, implicit alignment markers, and propagated display options.
 - `docs/src/notebooks/LAlatex_HTML_Utilities.ipynb`: HTML helpers with `show_html`, `pr`, and side-by-side display.
 - `docs/src/notebooks/LAlatex_from_Python.ipynb`: render Python expressions via Julia `LAlatex` using `juliacall`.
 

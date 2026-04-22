@@ -266,5 +266,7 @@ See the notebooks in `docs/src/notebooks/` for runnable walkthroughs:
 - `docs/src/compatibility.md`
 - `docs/src/notebooks/LAlatex_basics.ipynb`
 - `docs/src/notebooks/LAlatex_L_show_Guide.ipynb`
+- `docs/src/notebooks/LAlatex_cases_Guide.ipynb`
+- `docs/src/notebooks/LAlatex_aligned_Guide.ipynb`
 - `docs/src/notebooks/LAlatex_HTML_Utilities.ipynb`
 - `docs/src/notebooks/LAlatex_from_Python.ipynb`
