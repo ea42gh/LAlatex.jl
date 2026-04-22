@@ -58,9 +58,4 @@ See the Display policy page for `cases` and `aligned` rendering rules.
 - `docs/src/notebooks/LAlatex_HTML_Utilities.ipynb`: HTML helpers with `show_html`, `pr`, and side-by-side display.
 - `docs/src/notebooks/LAlatex_from_Python.ipynb`: render Python expressions via Julia `LAlatex` using `juliacall`.
 
-```@index
-```
-
-```@autodocs
-Modules = [LAlatex]
-```
+See the API page for generated docstrings and symbol index.

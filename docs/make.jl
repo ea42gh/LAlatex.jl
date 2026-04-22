@@ -10,6 +10,7 @@ DocMeta.setdocmeta!(LAlatex, :DocTestSetup, :(using LAlatex); recursive=true)
 
 makedocs(;
     modules=[LAlatex],
+    checkdocs=:exports,
     authors="ea42_github@mail.com",
     sitename="LAlatex.jl",
     format=Documenter.HTML(;

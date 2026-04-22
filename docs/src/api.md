@@ -75,3 +75,10 @@ LAlatex.SymbolicsBackendImpl.syms_symbolics
 LAlatex.SymbolicsBackendImpl.assume_symbolics!
 LAlatex.SymbolicsBackendImpl.symbolics_assumptions
 ```
+
+## Generated Public Docstrings
+
+```@autodocs
+Modules = [LAlatex]
+Private = false
+```
