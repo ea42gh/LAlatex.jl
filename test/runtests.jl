@@ -158,10 +158,16 @@ end
         @test LAlatex.to_latex(0 + 1im) == "\\mathit{i}"
         @test LAlatex.to_latex(0 + -1im) == "-\\mathit{i}"
         @test LAlatex.to_latex(:alpha) == "alpha"
+        @test LAlatex.to_latex([1, 2, 3]) == ["1", "2", "3"]
+        @test LAlatex.to_latex([1 2; 3 4]) == ["1" "2"; "3" "4"]
+        @test LAlatex.to_latex([[[1 2]], [[3 4]]]) == [[["1" "2"]], [["3" "4"]]]
 
         LAlatex.@syms z
         latex_z = LAlatex.to_latex(z)
         @test occursin("z", latex_z)
+
+        block_vector_latex = LAlatex.to_latex(BlockArray([1//2, 1//3, 1//4], [1, 2]))
+        @test block_vector_latex == ["\\frac{1}{2}", "\\frac{1}{3}", "\\frac{1}{4}"]
 
         if ok
             sp = LAlatex.syms(:sp; backend=:sympy, real=true)
@@ -292,6 +298,15 @@ end
         expanded = LAlatex.L_show(expr; symopts=(expand=true,))
         @test occursin("x^2", expanded) || occursin("x^{2}", expanded)
 
+        complex_expr = (x + y)^2 + im * ((x + y)^2)
+        complex_expanded = LAlatex.L_show(complex_expr; symopts=(expand=true,))
+        @test !occursin("\\left(y + x\\right)^{2}", complex_expanded)
+        @test occursin("x^{2}", complex_expanded) || occursin("x^2", complex_expanded)
+
+        complex_matrix_expanded = LAlatex.L_show(LAlatex.mixed_matrix((complex_expr,)); symopts=(expand=true,))
+        @test !occursin("\\left(y + x\\right)^{2}", complex_matrix_expanded)
+        @test occursin("x^{2}", complex_matrix_expanded) || occursin("x^2", complex_matrix_expanded)
+
         @test LAlatex.to_latex(-x) == "-x"
         @test !occursin("-1", LAlatex.to_latex(-(x + y)))
         lc_signed = LAlatex.L_show(LAlatex.lc([-(x + y), x - y, 1], [x y x + y]))
@@ -387,6 +402,12 @@ end
         @test out_block_vector isa BlockArray
         @test axes(out_block_vector) == axes(block_vector)
         @test Array(out_block_vector) == [6, 4, 3]
+        block_vector_latex = LAlatex.L_show(block_vector)
+        @test block_vector_latex == "\$\\frac{1}{12} \\left(\\begin{array}{r}\n6 \\\\ \\hline\n4 \\\\\n3 \\\\\n\\end{array}\\right)\$\n"
+
+        formatted_factored = LAlatex.L_show([1//2 1//3]; number_formatter=x -> x isa Real ? round(Float64(x); digits=1) : x)
+        @test occursin("\\frac{1}{6} \\left", formatted_factored)
+        @test occursin("3.0 & 2.0", formatted_factored)
 
         if ok
             LAlatex.set_backend!(:sympy)
@@ -428,6 +449,12 @@ end
             @test factor_power_py == 1
             @test LAlatex.to_latex(out_power_py[1, 1]) == LAlatex.to_latex(p_py)
             @test LAlatex.to_latex(out_power_py[1, 2]) == LAlatex.to_latex(a_py)
+
+            large_den_py = big(typemax(Int)) + 2
+            large_expr_py = sympy.Rational(1, string(large_den_py)) * a_py
+            factor_large_py, out_large_py = LAlatex.factor_out_denominator([large_expr_py a_py])
+            @test factor_large_py == large_den_py
+            @test LAlatex.to_latex(out_large_py[1, 1]) == LAlatex.to_latex(a_py)
 
             f_py = LAlatex.mixed_matrix((sympy.Rational(1, 2), a_py), (sympy.Rational(1, 3), b_py))
             factor_py, out_py = LAlatex.factor_out_denominator(f_py)
@@ -503,5 +530,20 @@ end
 
         joined = LAlatex.L_show((:x, :y); separator=L",\\quad")
         @test occursin("\\quad", joined)
+
+        empty_group = LAlatex.L_show(LAlatex.set())
+        @test occursin("\\left\\{", empty_group)
+        @test occursin("\\right\\}", empty_group)
+
+        unfactored_group = LAlatex.L_show(LAlatex.set([1//2 1//3]; factor_out=false))
+        @test occursin("\\frac{1}{2}", unfactored_group)
+        @test !occursin("\\frac{1}{6} \\left", unfactored_group)
+
+        expanded_group = LAlatex.L_show(LAlatex.set((x + y)^2; symopts=(expand=true,)))
+        @test !occursin("\\left(y + x\\right)^{2}", expanded_group)
+        @test occursin("x^{2}", expanded_group) || occursin("x^2", expanded_group)
+
+        @test_throws ArgumentError LAlatex.L_show(LAlatex.lc([1], [x y]))
+        @test_throws ArgumentError LAlatex.L_show(LAlatex.lc([1, 2, 3], [x y]))
     end
 end

@@ -338,12 +338,12 @@ end
     to_latex(A::BlockArray; number_formatter=nothing)
 """
 function to_latex(A::BlockArray; number_formatter=nothing)
-    return to_latex(Matrix(A); number_formatter=number_formatter)
+    return map(x -> _to_latex_matrix_entry(x; number_formatter=number_formatter), Array(A))
 end
 
 """
-    to_latex(matrices::Vector; number_formatter=nothing)
+    to_latex(matrices::AbstractVector{<:AbstractVector}; number_formatter=nothing)
 """
-function to_latex(matrices::Vector; number_formatter=nothing)
+function to_latex(matrices::AbstractVector{<:AbstractVector}; number_formatter=nothing)
     return [[is_none_val(mat) ? nothing : to_latex(mat; number_formatter=number_formatter) for mat in row] for row in matrices]
 end

@@ -152,7 +152,7 @@ function _push_sympy_denominator!(denominators::Vector{<:Integer}, x)
         nothing
     end
     if den_jl isa Integer
-        push!(denominators, Int(den_jl))
+        push!(denominators, den_jl)
     elseif den_jl isa Rational
         push!(denominators, denominator(den_jl))
     end

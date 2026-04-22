@@ -5,6 +5,11 @@ Apply optional symbolic transformations for display. Works with Symbolics and Sy
 Non-symbolic inputs are returned unchanged.
 """
 function symbolic_transform(x; simplify=:auto, expand=false, factor=false, collect=nothing)
+    if x isa Complex
+        return symbolic_transform(real(x); simplify=simplify, expand=expand, factor=factor, collect=collect) +
+               im * symbolic_transform(imag(x); simplify=simplify, expand=expand, factor=factor, collect=collect)
+    end
+
     if x isa Symbolics.Num
         y = x
         if expand
@@ -61,6 +66,16 @@ function symbolic_transform(x; simplify=:auto, expand=false, factor=false, colle
     end
 
     return x
+end
+
+function _contains_symbolic_value(x)
+    if x isa Complex
+        return _contains_symbolic_value(real(x)) || _contains_symbolic_value(imag(x))
+    end
+    return x isa Symbolics.Num ||
+           _is_pythoncall_py(x) ||
+           Symbolics.SymbolicUtils.issym(x) ||
+           Symbolics.SymbolicUtils.iscall(x)
 end
 
 """

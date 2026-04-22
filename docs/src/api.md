@@ -58,6 +58,7 @@ Use `symopts=(; factor=true)` or `symopts=(factor=true,)` to build a `NamedTuple
 - `apply_function`, `round_value`, `round_matrices`
 - `print_np_array_def`
 - `L_show(...; symopts=...)` for optional Symbolics/SymPy transforms
+- `L_show(...; number_formatter=f)` applies `f` while rendering scalar entries; matrix-wide denominator factoring runs before entry formatting.
 - `factor_out_denominator` (returns `(den, scaled)` and expands symbolic entries elementwise; symbolic factoring is coefficient-level and does not pull denominators out of powers/functions or non-scalar symbolic denominators)
 
 

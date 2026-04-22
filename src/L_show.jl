@@ -201,18 +201,36 @@ function L_show_string(s; color=nothing)
     return style_wrapper(formatted, color)
 end
 
+_matrix_num_cols(A) = ndims(A) == 1 ? 1 : size(A, 2)
+_matrix_entry(A, i, j) = ndims(A) == 1 ? A[i] : A[i, j]
+
+function _block_dividers(A)
+    axes_A = axes(A)
+    row_blocks = axes_A[1]
+    col_blocks = ndims(A) == 1 ? nothing : axes_A[2]
+
+    row_dividers = hasproperty(row_blocks, :lasts) && !isempty(row_blocks.lasts) ?
+                   collect(row_blocks.lasts[1:end-1]) : Int[]
+    col_dividers = col_blocks !== nothing && hasproperty(col_blocks, :lasts) && !isempty(col_blocks.lasts) ?
+                   collect(col_blocks.lasts[1:end-1]) : Int[]
+
+    row_dividers = filter(d -> 1 <= d < size(A, 1), row_dividers)
+    col_dividers = filter(d -> 1 <= d < _matrix_num_cols(A), col_dividers)
+    return row_dividers, col_dividers
+end
+
 """
     format_matrix_row(A, i, per_element_style, row_dividers) -> String
 
 Format a single matrix row for LaTeX output.
 """
-function format_matrix_row(A, i, per_element_style, row_dividers)
+function format_matrix_row(A, i, per_element_style, row_dividers, number_formatter=nothing)
     row = join(
         [begin
-            x = A[i, j]
-            formatted_x = _to_latex_matrix_entry(x)
+            x = _matrix_entry(A, i, j)
+            formatted_x = _to_latex_matrix_entry(x; number_formatter=number_formatter)
             per_element_style !== nothing ? per_element_style(x, i, j, formatted_x) : formatted_x
-        end for j in 1:size(A, 2)], " & "
+        end for j in 1:_matrix_num_cols(A)], " & "
     )
 
     if i in row_dividers && i < size(A, 1)
@@ -234,22 +252,14 @@ function construct_latex_matrix_body(A, arraystyle, is_block_array, per_element_
 
     row_dividers, col_dividers = Int[], Int[]
     if is_block_array
-        row_blocks, col_blocks = axes(A)
-        row_dividers = isempty(row_blocks.lasts) ? Int[] : collect(row_blocks.lasts[1:end-1])
-        col_dividers = isempty(col_blocks.lasts) ? Int[] : collect(col_blocks.lasts[1:end-1])
-        row_dividers = filter(d -> 1 <= d < size(A, 1), row_dividers)
-        col_dividers = filter(d -> 1 <= d < size(A, 2), col_dividers)
+        row_dividers, col_dividers = _block_dividers(A)
     end
 
-    col_format_str = matrix_env == "array" ? construct_col_format(size(A, 2), col_dividers) : ""
-
-    if number_formatter !== nothing
-        A = map(x -> number_formatter(x), A)
-    end
+    col_format_str = matrix_env == "array" ? construct_col_format(_matrix_num_cols(A), col_dividers) : ""
 
     factor, intA = process_array(A, factor_out)
 
-    matrix_rows = [format_matrix_row(intA, i, per_element_style, row_dividers) for i in 1:size(A, 1)]
+    matrix_rows = [format_matrix_row(intA, i, per_element_style, row_dividers, number_formatter) for i in 1:size(A, 1)]
     matrix_body = left_bracket * "\\begin{$matrix_env}$col_format_str\n" *
                   join(matrix_rows, "\n") * "\n\\end{$matrix_env}" * right_bracket
 
@@ -286,7 +296,7 @@ function L_show_matrix(A; arraystyle=:parray, is_block_array=false, color=nothin
         A = Matrix(A)
     end
 
-    if any(x -> x isa Symbolics.Num || _is_pythoncall_py(x), A)
+    if any(_contains_symbolic_value, A)
         A = map(x -> symbolic_transform(x; symopts...), A)
     end
 
@@ -375,6 +385,7 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
             separator=separator,
             number_formatter=number_formatter,
             per_element_style=per_element_style,
+            factor_out=factor_out,
             symopts=symopts,
         )
     end
@@ -509,13 +520,15 @@ end
 Render a `Group` with delimiters and separators.
 """
 function L_show_set(obj_group; setstyle=:Barray, arraystyle=:parray, color=nothing, separator=", ",
-                    number_formatter=nothing, per_element_style=nothing, symopts=NamedTuple())
+                    number_formatter=nothing, per_element_style=nothing, factor_out=true,
+                    symopts=NamedTuple())
     symopts = normalize_symopts(symopts)
     if !(obj_group isa Group)
         error("L_show_set expected a Group, got: $(typeof(obj_group))")
     end
 
-    formatting_keys = [:setstyle, :arraystyle, :color, :separator, :number_formatter, :per_element_style]
+    formatting_keys = [:setstyle, :arraystyle, :color, :separator, :number_formatter,
+                       :per_element_style, :factor_out, :symopts]
     group_options = Dict(k => v for (k, v) in pairs(obj_group.options) if k in formatting_keys)
     combined_options = merge(Dict(
         :setstyle => setstyle,
@@ -524,8 +537,10 @@ function L_show_set(obj_group; setstyle=:Barray, arraystyle=:parray, color=nothi
         :separator => separator,
         :number_formatter => number_formatter,
         :per_element_style => per_element_style,
+        :factor_out => factor_out,
         :symopts => symopts,
     ), group_options)
+    combined_options[:symopts] = normalize_symopts(combined_options[:symopts])
 
     clean_separator = normalize_separator(combined_options[:separator])
     _, _, left_delim, right_delim = parse_arraystyle(combined_options[:setstyle])
@@ -533,17 +548,14 @@ function L_show_set(obj_group; setstyle=:Barray, arraystyle=:parray, color=nothi
     obj_latex = map(obj -> L_show_core(obj;
                                        arraystyle=combined_options[:arraystyle],
                                        color=combined_options[:color],
-                                       separator=combined_options[:separator],
-                                       number_formatter=combined_options[:number_formatter],
-                                       per_element_style=combined_options[:per_element_style],
-                                       factor_out=true,
-                                       symopts=combined_options[:symopts]),
+                                        separator=combined_options[:separator],
+                                        number_formatter=combined_options[:number_formatter],
+                                        per_element_style=combined_options[:per_element_style],
+                                        factor_out=combined_options[:factor_out],
+                                        symopts=combined_options[:symopts]),
                     obj_group.entries)
 
-    joined_latex = obj_latex[1]
-    for i in 2:length(obj_latex)
-        joined_latex *= " " * clean_separator * " " * obj_latex[i]
-    end
+    joined_latex = join(obj_latex, " " * clean_separator * " ")
 
     formatted_group = LaTeXString("$(left_delim) " * joined_latex * " $(right_delim)")
     return style_wrapper(formatted_group, combined_options[:color])
@@ -684,6 +696,14 @@ function L_show_lc(lcobj::LinearCombination; setstyle=:parray, arraystyle=:parra
     end
 
     n = X isa AbstractMatrix ? size(X, 2) : length(X)
+    coeff_count = try
+        length(s)
+    catch
+        throw(ArgumentError("lc coefficients must be an indexable collection with length $n"))
+    end
+    if coeff_count != n
+        throw(ArgumentError("lc coefficient count ($coeff_count) must match vector count ($n)"))
+    end
     getvec(i) = X isa AbstractMatrix ? X[:, i] : X[i]
 
     if opts[:sign_policy] === :plus
