@@ -13,7 +13,7 @@ makedocs(;
     authors="ea42_github@mail.com",
     sitename="LAlatex.jl",
     format=Documenter.HTML(;
-        canonical="https://ea42gh.github.io/LAlatex.jl",
+        canonical="https://ea42gh.github.io/LAlatex",
         edit_link="main",
         assets=String[],
     ),
@@ -30,6 +30,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="github.com/ea42gh/LAlatex.jl",
+    repo="github.com/ea42gh/LAlatex",
     devbranch="main",
 )

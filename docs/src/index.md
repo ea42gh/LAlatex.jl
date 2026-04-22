@@ -4,7 +4,7 @@ CurrentModule = LAlatex
 
 # LAlatex
 
-Documentation for [LAlatex](https://github.com/ea42gh/LAlatex.jl).
+Documentation for [LAlatex](https://github.com/ea42gh/LAlatex).
 
 ## Install
 

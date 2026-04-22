@@ -5,6 +5,7 @@
 - `set_backend!` / `get_backend`
 - `syms`, `@syms`
 - `syms_sympy`, `@syms_sympy` (SymPy-only)
+- `import_sympy` for explicit SymPy import and diagnostics
 - `mixed_matrix`, `@mixed_matrix`
 
 Note: use `mixed_matrix`/`@mixed_matrix` when mixing Symbolics/SymPy symbols with complex rationals,
@@ -25,6 +26,7 @@ otherwise Julia may throw an ambiguous `promote_rule` error when constructing a 
 
 - `to_latex`
 - `symbolic_transform` (Symbolics/SymPy display transforms)
+- `symbolic_term_coefficients` for coefficient-level symbolic inspection used by display helpers
 
 ### symbolic_transform options
 

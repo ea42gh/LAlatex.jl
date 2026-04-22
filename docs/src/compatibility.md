@@ -2,7 +2,7 @@
 
 ## Julia
 
-- Julia 1.9+ recommended.
+- Julia 1.10.10+ required by package compatibility bounds.
 
 ## Python
 

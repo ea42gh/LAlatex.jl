@@ -13,6 +13,12 @@ pyimport("sys").executable
 
 ## Python -> Julia (juliacall)
 
+Install the Python-side bridge before running Python examples:
+
+```bash
+python -m pip install juliacall
+```
+
 ```python
 from juliacall import Main as jl
 from IPython.display import Latex, display

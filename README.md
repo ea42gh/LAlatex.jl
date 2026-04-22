@@ -1,8 +1,8 @@
 # LAlatex
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://ea42gh.github.io/LAlatex.jl/stable/)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://ea42gh.github.io/LAlatex.jl/dev/)
-[![Build Status](https://github.com/ea42gh/LAlatex.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/ea42gh/LAlatex.jl/actions/workflows/CI.yml?query=branch%3Amain)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://ea42gh.github.io/LAlatex/stable/)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://ea42gh.github.io/LAlatex/dev/)
+[![Build Status](https://github.com/ea42gh/LAlatex/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/ea42gh/LAlatex/actions/workflows/CI.yml?query=branch%3Amain)
 
 Why LAlatex?
 - It keeps linear algebra notation consistent across lectures, notes, and notebooks.
@@ -76,6 +76,7 @@ l_show("A = ", A)
 Python interop:
 
 ```python
+# pip install juliacall
 from juliacall import Main as jl
 jl.seval("using LAlatex")
 print(jl.LAlatex.L_show("A = ", [[1, 2], [3, 4]]))
