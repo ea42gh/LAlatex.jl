@@ -114,6 +114,24 @@ L_show(
 )
 ```
 
+## Aligned derivations
+
+Use `aligned` for derivations and equivalence chains. Rows can be vectors,
+tuples, or pairs. Provide the row cells; `aligned` inserts LaTeX `&` alignment
+markers between cells.
+
+```julia
+@syms x y
+
+L_show(
+    aligned(
+        [L"Ax", L"=", [x, y]],
+        (L"x", L"\in", L"\mathcal{N}(A)"),
+        L"\dim\mathcal{N}(A)" => L"n - \operatorname{rank}(A)",
+    ),
+)
+```
+
 ## Formatter helpers
 
 ```julia

@@ -370,6 +370,27 @@ function cases(entries...; kwargs...)
 end
 
 """
+    Aligned(rows, options)
+
+Container for LaTeX `aligned` rendering in `L_show`.
+"""
+struct Aligned
+    rows::Tuple
+    options::NamedTuple
+end
+
+"""
+    aligned(rows...; kwargs...) -> Aligned
+
+Create an aligned display. Each row may be a vector, tuple, or pair. Users
+provide row cells; `aligned` inserts LaTeX alignment markers between cells.
+Pairs render as `left &= right`.
+"""
+function aligned(rows...; kwargs...)
+    return Aligned(rows, (; kwargs...))
+end
+
+"""
     Group(entries, options)
 
 Container for grouped LaTeX rendering.
@@ -420,6 +441,12 @@ function L_show_core(obj; setstyle=:Barray, arraystyle=:parray, color=nothing, s
         return L_show_cases(obj; arraystyle=arraystyle, color=color,
                             number_formatter=number_formatter, per_element_style=per_element_style,
                             factor_out=factor_out, symopts=symopts)
+    end
+
+    if obj isa Aligned
+        return L_show_aligned(obj; arraystyle=arraystyle, color=color,
+                              number_formatter=number_formatter, per_element_style=per_element_style,
+                              factor_out=factor_out, symopts=symopts)
     end
 
     if obj isa Tuple && isempty(obj)
@@ -596,14 +623,9 @@ function _case_entry_parts(entry)
     throw(ArgumentError("cases entries must be pairs or two-tuples; got $(typeof(entry))"))
 end
 
-"""
-    L_show_cases(case_group; kwargs...) -> String
-
-Render a `Cases` group as a LaTeX `cases` environment.
-"""
-function L_show_cases(case_group::Cases; arraystyle=:parray, color=nothing,
-                      number_formatter=nothing, per_element_style=nothing,
-                      factor_out=true, symopts=NamedTuple())
+function _display_container_options(options; arraystyle=:parray, color=nothing,
+                                    number_formatter=nothing, per_element_style=nothing,
+                                    factor_out=true, symopts=NamedTuple())
     symopts = normalize_symopts(symopts)
     combined_options = merge(Dict(
         :arraystyle => arraystyle,
@@ -612,30 +634,77 @@ function L_show_cases(case_group::Cases; arraystyle=:parray, color=nothing,
         :per_element_style => per_element_style,
         :factor_out => factor_out,
         :symopts => symopts,
-    ), Dict(pairs(case_group.options)))
+    ), Dict(pairs(options)))
     combined_options[:symopts] = normalize_symopts(combined_options[:symopts])
+    return combined_options
+end
+
+function _render_display_cell(x, options)
+    return strip(L_show_core(x;
+        arraystyle=options[:arraystyle],
+        color=nothing,
+        number_formatter=options[:number_formatter],
+        per_element_style=options[:per_element_style],
+        factor_out=options[:factor_out],
+        symopts=options[:symopts]))
+end
+
+"""
+    L_show_cases(case_group; kwargs...) -> String
+
+Render a `Cases` group as a LaTeX `cases` environment.
+"""
+function L_show_cases(case_group::Cases; arraystyle=:parray, color=nothing,
+                      number_formatter=nothing, per_element_style=nothing,
+                      factor_out=true, symopts=NamedTuple())
+    combined_options = _display_container_options(case_group.options;
+        arraystyle=arraystyle, color=color, number_formatter=number_formatter,
+        per_element_style=per_element_style, factor_out=factor_out, symopts=symopts)
 
     rows = map(case_group.entries) do entry
         value, condition = _case_entry_parts(entry)
-        value_latex = strip(L_show_core(value;
-            arraystyle=combined_options[:arraystyle],
-            color=nothing,
-            number_formatter=combined_options[:number_formatter],
-            per_element_style=combined_options[:per_element_style],
-            factor_out=combined_options[:factor_out],
-            symopts=combined_options[:symopts]))
-        condition_latex = strip(L_show_core(condition;
-            arraystyle=combined_options[:arraystyle],
-            color=nothing,
-            number_formatter=combined_options[:number_formatter],
-            per_element_style=combined_options[:per_element_style],
-            factor_out=combined_options[:factor_out],
-            symopts=combined_options[:symopts]))
+        value_latex = _render_display_cell(value, combined_options)
+        condition_latex = _render_display_cell(condition, combined_options)
         "$value_latex, & $condition_latex \\\\"
     end
 
     formatted_cases = "\\begin{cases}\n" * join(rows, "\n") * "\n\\end{cases}"
     return style_wrapper(formatted_cases, combined_options[:color])
+end
+
+function _aligned_row_cells(row)
+    if row isa Pair
+        return (first(row), L"=", last(row))
+    elseif row isa Tuple
+        isempty(row) && throw(ArgumentError("aligned rows must contain at least one cell"))
+        return row
+    elseif row isa AbstractVector
+        isempty(row) && throw(ArgumentError("aligned rows must contain at least one cell"))
+        return Tuple(row)
+    end
+    throw(ArgumentError("aligned rows must be pairs, tuples, or vectors; got $(typeof(row))"))
+end
+
+"""
+    L_show_aligned(aligned_group; kwargs...) -> String
+
+Render an `Aligned` group as a LaTeX `aligned` environment.
+"""
+function L_show_aligned(aligned_group::Aligned; arraystyle=:parray, color=nothing,
+                        number_formatter=nothing, per_element_style=nothing,
+                        factor_out=true, symopts=NamedTuple())
+    combined_options = _display_container_options(aligned_group.options;
+        arraystyle=arraystyle, color=color, number_formatter=number_formatter,
+        per_element_style=per_element_style, factor_out=factor_out, symopts=symopts)
+
+    rows = map(aligned_group.rows) do row
+        cells = _aligned_row_cells(row)
+        rendered = [_render_display_cell(cell, combined_options) for cell in cells]
+        join(rendered, " & ") * " \\\\"
+    end
+
+    formatted_aligned = "\\begin{aligned}\n" * join(rows, "\n") * "\n\\end{aligned}"
+    return style_wrapper(formatted_aligned, combined_options[:color])
 end
 
 function _lc_literal_number(x)

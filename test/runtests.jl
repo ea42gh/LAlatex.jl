@@ -38,7 +38,7 @@ end
             :syms, :syms_sympy, :import_sympy, :get_backend, :set_backend!,
             :symbolic_transform, :symbolic_term_coefficients,
             :to_latex, :L_show, :l_show, :L_interp, :to_html,
-            :mixed_matrix, :set, :lc, :cases, :factor_out_denominator,
+            :mixed_matrix, :set, :lc, :cases, :aligned, :factor_out_denominator,
             :bold_formatter, :scientific_formatter, :tril_formatter,
         ]
         @test all(name -> name in exported, expected_exports)
@@ -558,6 +558,24 @@ end
         @test !occursin("\\left(y + x\\right)^{2}", expanded_cases)
         @test occursin("x^{2}", expanded_cases) || occursin("x^2", expanded_cases)
         @test_throws ArgumentError LAlatex.L_show(LAlatex.cases(x))
+
+        aligned_latex = LAlatex.L_show(
+            LAlatex.aligned(
+                [L"Ax", L"=", [x, y]],
+                (L"x", L"\in", L"\mathcal{N}(A)"),
+                L"\dim\mathcal{N}(A)" => L"n - \operatorname{rank}(A)",
+            ),
+        )
+        @test occursin("\\begin{aligned}", aligned_latex)
+        @test occursin("Ax & = & \\left(\\begin{array}{r}\nx \\\\\ny \\\\\n\\end{array}\\right)", aligned_latex)
+        @test occursin("x & \\in & \\mathcal{N}(A)", aligned_latex)
+        @test occursin("\\dim\\mathcal{N}(A) & = & n - \\operatorname{rank}(A)", aligned_latex)
+
+        expanded_aligned = LAlatex.L_show(LAlatex.aligned([(x + y)^2, L"=", x]); symopts=(expand=true,))
+        @test !occursin("\\left(y + x\\right)^{2}", expanded_aligned)
+        @test occursin("x^{2}", expanded_aligned) || occursin("x^2", expanded_aligned)
+        @test_throws ArgumentError LAlatex.L_show(LAlatex.aligned(x))
+        @test_throws ArgumentError LAlatex.L_show(LAlatex.aligned([]))
 
         @test_throws ArgumentError LAlatex.L_show(LAlatex.lc([1], [x y]))
         @test_throws ArgumentError LAlatex.L_show(LAlatex.lc([1, 2, 3], [x y]))
