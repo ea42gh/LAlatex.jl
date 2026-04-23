@@ -27,6 +27,11 @@ ok, sympy, pyexe = _sympy_available()
 if pyexe !== nothing
     @info "PythonCall executable for tests" pyexe
 end
+if ok
+    @info "SymPy version for tests" string(sympy.__version__)
+else
+    @info "SymPy unavailable for tests" JULIA_PYTHONCALL_EXE=get(ENV, "JULIA_PYTHONCALL_EXE", nothing)
+end
 
 @testset "LAlatex" begin
     LAlatex.set_backend!(:symbolics)

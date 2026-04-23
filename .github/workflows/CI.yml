@@ -33,10 +33,13 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
+        id: setup-python
         with:
           python-version: "3.11"
       - name: Install Python deps
-        run: python -m pip install --upgrade pip sympy
+        run: |
+          "${{ steps.setup-python.outputs.python-path }}" -m pip install --upgrade pip sympy
+          "${{ steps.setup-python.outputs.python-path }}" -c "import sys, sympy; print(sys.executable); print(sympy.__version__)"
       - uses: julia-actions/setup-julia@v2
         with:
           version: ${{ matrix.version }}
@@ -45,8 +48,8 @@ jobs:
       - uses: julia-actions/julia-buildpkg@v1
         env:
           JULIA_CONDAPKG_BACKEND: Null
-          JULIA_PYTHONCALL_EXE: python
+          JULIA_PYTHONCALL_EXE: ${{ steps.setup-python.outputs.python-path }}
       - uses: julia-actions/julia-runtest@v1
         env:
           JULIA_CONDAPKG_BACKEND: Null
-          JULIA_PYTHONCALL_EXE: python
+          JULIA_PYTHONCALL_EXE: ${{ steps.setup-python.outputs.python-path }}
