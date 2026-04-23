@@ -1,6 +1,5 @@
 using Test
 using LaTeXStrings
-using PythonCall
 
 using BlockArrays
 using LAlatex
@@ -13,7 +12,7 @@ Return (ok, sympy, exe) where `ok` is true if SymPy is importable via PythonCall
 function _sympy_available()
     try
         exe = try
-            PythonCall.pyconvert(String, PythonCall.pyimport("sys").executable)
+            LAlatex._python_exe_hint()
         catch
             nothing
         end
@@ -413,6 +412,7 @@ end
         @test occursin("3.0 & 2.0", formatted_factored)
 
         if ok
+            pc = getfield(LAlatex, :PythonCall)
             LAlatex.set_backend!(:sympy)
             a_py, b_py = LAlatex.syms(:a, :b)
             latex_py = LAlatex.L_show(a_py, " + ", b_py)
@@ -462,8 +462,8 @@ end
             f_py = LAlatex.mixed_matrix((sympy.Rational(1, 2), a_py), (sympy.Rational(1, 3), b_py))
             factor_py, out_py = LAlatex.factor_out_denominator(f_py)
             @test factor_py == 6
-            @test PythonCall.pyconvert(Int, out_py[1, 1]) == 3
-            @test PythonCall.pyconvert(Int, out_py[2, 1]) == 2
+            @test pc.pyconvert(Int, out_py[1, 1]) == 3
+            @test pc.pyconvert(Int, out_py[2, 1]) == 2
             @test LAlatex.to_latex(out_py[1, 2]) == LAlatex.to_latex(6 * a_py)
             @test LAlatex.to_latex(out_py[2, 2]) == LAlatex.to_latex(6 * b_py)
         end
