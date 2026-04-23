@@ -1,6 +1,7 @@
 using Pkg
 
 Pkg.develop(path=joinpath(@__DIR__, ".."))
+Pkg.resolve()
 Pkg.instantiate()
 
 using LAlatex
