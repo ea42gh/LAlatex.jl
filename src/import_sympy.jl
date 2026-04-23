@@ -25,6 +25,7 @@ Return true when SymPy can be imported in the current PythonCall runtime,
 without caching the imported module in `LAlatex`.
 """
 function _sympy_probe()
+    _sympy[] === nothing || return true
     pc = _ensure_pythoncall()
     pc === nothing && return false
     try
