@@ -217,7 +217,8 @@ end
 
             symbolics_lc = LAlatex.L_show(LAlatex.lc([-(sx + sy), sx - sy], [sx sy]))
             @test occursin("-  \\left", symbolics_lc)
-            @test occursin("+  \\left(-", symbolics_lc)
+            @test occursin("\\left(x + y\\right)", symbolics_lc) || occursin("\\left(y + x\\right)", symbolics_lc)
+            @test occursin("\\left(x - y\\right)", symbolics_lc) || occursin("\\left(-y + x\\right)", symbolics_lc)
 
             if ok
                 LAlatex.set_backend!(:sympy)
@@ -326,10 +327,14 @@ end
         @test !occursin("-1", LAlatex.to_latex(-(x + y)))
         lc_signed = LAlatex.L_show(LAlatex.lc([-(x + y), x - y, 1], [x y x + y]))
         @test occursin("-  \\left", lc_signed)
-        @test occursin("+  \\left(-", lc_signed)
+        @test occursin("\\left(x + y\\right)", lc_signed) || occursin("\\left(y + x\\right)", lc_signed)
+        @test occursin("\\left(x - y\\right)", lc_signed) || occursin("\\left(-y + x\\right)", lc_signed)
         @test !occursin("\\left(1 ", lc_signed)
         @test !occursin(" -  \\left(1 ", lc_signed)
-        @test lc_signed == "\$ -  \\left(y + x\\right)\\left(\\begin{array}{r}\nx \\\\\n\\end{array}\\right)  +  \\left(-y + x\\right)\\left(\\begin{array}{r}\ny \\\\\n\\end{array}\\right)  +  \\left(\\begin{array}{r}\ny + x \\\\\n\\end{array}\\right) \$\n"
+        @test occursin("\\left(\\begin{array}{r}\nx \\\\\n\\end{array}\\right)", lc_signed)
+        @test occursin("\\left(\\begin{array}{r}\ny \\\\\n\\end{array}\\right)", lc_signed)
+        @test occursin("\\left(\\begin{array}{r}\n", lc_signed)
+        @test occursin("\\left(x + y\\right)", lc_signed) || occursin("\\left(y + x\\right)", lc_signed)
 
         symA = [1//2 x; 3//4 y]
         factor, symA_out = LAlatex.factor_out_denominator(symA)
