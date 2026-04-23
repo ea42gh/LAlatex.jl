@@ -47,6 +47,7 @@ function _is_sympy_py(x)
     return mod !== nothing && (mod == "sympy" || startswith(mod, "sympy."))
 end
 using Symbolics
+using PrecompileTools
 
 include("backend.jl")
 include("symbolics_backend.jl")
@@ -242,5 +243,34 @@ include("Convert.jl")
 include("HTMLDisplay.jl")
 include("LatexRepresentations.jl")
 include("L_show.jl")
+
+@setup_workload begin
+    int_matrix = [1 2 3; 4 5 6]
+    rational_matrix = [1//2 1//3; 2//3 3//4]
+    int_vector = [1, 2, 3]
+    x, y = syms(:x, :y)
+    symbolic_matrix = mixed_matrix((1//2, x), (3, y))
+    identity_cols = [1 0; 0 1]
+
+    @compile_workload begin
+        to_latex(3)
+        to_latex(3//4)
+        to_latex(1.2e3)
+        to_latex(int_vector)
+        to_latex(int_matrix)
+
+        L_show(LaTeXString("A = "), int_matrix, LaTeXString(",\\quad A^T A = "), int_matrix' * int_matrix)
+        l_show(LaTeXString("A = "), int_matrix, LaTeXString(",\\quad A^T A = "), int_matrix' * int_matrix)
+        L_show(LaTeXString("R = "), rational_matrix)
+        L_show(LaTeXString("v = "), int_vector)
+        L_show(LaTeXString("M = "), symbolic_matrix; symopts=(expand=true,))
+        L_show(lc([1, -2], identity_cols))
+        L_show(cases(int_vector => LaTeXString("x > 0"), rational_matrix => "otherwise"))
+        L_show(aligned(LaTeXString("A") => int_matrix, (LaTeXString("x"), LaTeXString("\\in"), int_vector)))
+
+        to_html("warmup"; sz=12)
+        show_side_by_side_html(["left"], ["right"])
+    end
+end
 # ===============================================================
 end

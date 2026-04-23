@@ -182,6 +182,38 @@ function _formatted_number_to_latex(x)
     return nothing
 end
 
+function _to_latex_rational(x::Rational)
+    n, d = numerator(x), denominator(x)
+    if d == 1
+        return string(n)
+    else
+        sign_str = n < 0 ? "-" : ""
+        return sign_str * "\\frac{$(abs(n))}{$d}"
+    end
+end
+
+function _to_latex_float(x::AbstractFloat)
+    str_x = string(x)
+    if occursin('e', str_x)
+        base, exponent = split(str_x, 'e')
+        exponent = replace(exponent, "+" => "")
+        return base * " e^{" * exponent * "}"
+    else
+        return str_x
+    end
+end
+
+function _to_latex_plain_number(x::Number)
+    if x isa Rational
+        return _to_latex_rational(x)
+    elseif x isa AbstractFloat
+        return _to_latex_float(x)
+    elseif x isa Integer
+        return string(x)
+    end
+    return nothing
+end
+
 function _to_latex_scalar(x; number_formatter=nothing)
     if _is_pythoncall_py(x)
         return _to_latex_sympy(x)
@@ -194,6 +226,10 @@ function _to_latex_scalar(x; number_formatter=nothing)
     formatted_x = number_formatter !== nothing && x isa Number ? number_formatter(x) : x
     formatted_latex = _formatted_number_to_latex(formatted_x)
     formatted_latex !== nothing && return formatted_latex
+    if number_formatter === nothing && formatted_x isa Number
+        plain_latex = _to_latex_plain_number(formatted_x)
+        plain_latex !== nothing && return plain_latex
+    end
 
     s = strip_math_delims(latexify(formatted_x))
     return isempty(s) ? string(formatted_x) : s
@@ -243,13 +279,7 @@ end
     to_latex(x::Rational{Int}; number_formatter=nothing) -> String
 """
 function to_latex(x::Rational{Int}; number_formatter=nothing)
-    n, d = numerator(x), denominator(x)
-    if d == 1
-        return string(n)
-    else
-        sign_str = n < 0 ? "-" : ""
-        return sign_str * "\\frac{$(abs(n))}{$d}"
-    end
+    return number_formatter === nothing ? _to_latex_rational(x) : _to_latex_scalar(x; number_formatter=number_formatter)
 end
 
 """
@@ -303,15 +333,8 @@ function to_latex(x::Float64; number_formatter=nothing)
     x = number_formatter !== nothing ? number_formatter(x) : x
     formatted_latex = _formatted_number_to_latex(x)
     formatted_latex !== nothing && return formatted_latex
-
-    str_x = string(x)
-    if occursin('e', str_x)
-        base, exponent = split(str_x, 'e')
-        exponent = replace(exponent, "+" => "")
-        return base * " e^{" * exponent * "}"
-    else
-        return str_x
-    end
+    x isa AbstractFloat && return _to_latex_float(x)
+    return _to_latex_scalar(x)
 end
 
 """
