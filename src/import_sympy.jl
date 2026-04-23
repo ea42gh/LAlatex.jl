@@ -19,6 +19,26 @@ end
 
 # ---------------------------------------------------------------------------------------------
 """
+    _sympy_probe() -> Bool
+
+Return true when SymPy appears importable in the current PythonCall runtime,
+without importing and caching the `sympy` module itself.
+"""
+function _sympy_probe()
+    pc = _ensure_pythoncall()
+    pc === nothing && return false
+    try
+        importlib_util = Base.invokelatest(pc.pyimport, "importlib.util")
+        find_spec = Base.invokelatest(pc.pygetattr, importlib_util, "find_spec")
+        spec = Base.invokelatest(find_spec, "sympy")
+        return Base.invokelatest(pc.pyconvert, Bool, spec)
+    catch
+        return false
+    end
+end
+
+# ---------------------------------------------------------------------------------------------
+"""
     import_sympy() -> Py
 
 Import and cache the Python module `sympy`. Provides an actionable error if unavailable.

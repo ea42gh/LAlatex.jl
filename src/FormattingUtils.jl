@@ -31,6 +31,10 @@ function sanitize_text(s::AbstractString)
     for c in String(s)
         if c == '\\'
             print(escaped, "\\textbackslash{}")
+        elseif c == '~'
+            print(escaped, "\\textasciitilde{}")
+        elseif c == '^'
+            print(escaped, "\\textasciicircum{}")
         elseif c in ('_', '$', '%', '&', '#', '{', '}')
             print(escaped, "\\", c)
         else

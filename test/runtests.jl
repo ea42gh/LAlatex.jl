@@ -112,6 +112,10 @@ end
         @test occursin("hello", html)
         @test occursin("font-size: 18px", html)
         @test occursin("color: blue", html)
+        escaped_html = LAlatex.to_html("<script>"; env="script onclick=1")
+        @test occursin("&lt;script&gt;", escaped_html)
+        @test !occursin("<script>", escaped_html)
+        @test occursin("<strong>", escaped_html)
 
         html2 = LAlatex.to_html("a", "b"; sz1=10, sz2=12, color="black", justify="left")
         @test occursin(">a<", html2)
@@ -133,6 +137,9 @@ end
         @test occursin("two", side)
         @test occursin("A", side)
         @test occursin("B", side)
+        escaped_side = LAlatex.show_side_by_side_html(["<b>x</b>"], ["<i>t</i>"])
+        @test occursin("&lt;b&gt;x&lt;/b&gt;", escaped_side)
+        @test occursin("&lt;i&gt;t&lt;/i&gt;", escaped_side)
 
         side_obj = LAlatex.show_side_by_side(["x", "y"])
         @test side_obj isa LAlatex.SideBySideHTML
@@ -152,6 +159,7 @@ end
         LAlatex.set_backend!(:symbolics)
         @test LAlatex.to_latex("a_b") == "\\text{a\\_b}"
         @test LAlatex.to_latex("50% & # {x} \\") == "\\text{50\\% \\& \\# \\{x\\} \\textbackslash{}}"
+        @test LAlatex.to_latex("x~y^z") == "\\text{x\\textasciitilde{}y\\textasciicircum{}z}"
         @test LAlatex.to_latex("= 0") == "= 0"
         @test LAlatex.to_latex(LaTeXString("\\alpha + 1")) == "\\alpha + 1"
         @test LAlatex.to_latex('x') == "\\text{x}"

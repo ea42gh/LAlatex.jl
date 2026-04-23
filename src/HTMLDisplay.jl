@@ -1,6 +1,29 @@
 import Base: show
 using IOCapture
 
+function _escape_html_text(x)
+    s = String(x)
+    s = replace(s, "&" => "&amp;")
+    s = replace(s, "<" => "&lt;")
+    s = replace(s, ">" => "&gt;")
+    s = replace(s, "\"" => "&quot;")
+    return replace(s, "'" => "&#39;")
+end
+
+_escape_html_attr(x) = _escape_html_text(x)
+
+function _sanitize_html_tag(env)
+    tag = lowercase(strip(String(env)))
+    occursin(r"^[a-z][a-z0-9-]*$", tag) || return "strong"
+    return tag
+end
+
+function _sanitize_text_align(justify)
+    value = lowercase(strip(String(justify)))
+    value in ("left", "right", "center", "justify", "start", "end") && return value
+    return "left"
+end
+
 """
     HTMLOut(html::String)
 
@@ -26,9 +49,11 @@ Wrap a string in a styled HTML container.
 """
 function to_html(txt; sz=20, color="darkred", justify="left",
                  height=15, width=100, env="strong")
+    env_tag = _sanitize_html_tag(env)
+    txt_html = _escape_html_text(txt)
     return """
-    <div style="font-size: $(sz)px; color: $(color); text-align: $(justify); height: $(height)px; width: $(width)%;">
-      <$(env)>$(txt)</$(env)>
+    <div style="font-size: $(sz)px; color: $(_escape_html_attr(color)); text-align: $(_sanitize_text_align(justify)); height: $(height)px; width: $(width)%;">
+      <$(env_tag)>$(txt_html)</$(env_tag)>
     </div>
     """
 end
@@ -40,10 +65,13 @@ Wrap two strings in a styled HTML container with separate font sizes.
 """
 function to_html(txt1, txt2; sz1=20, sz2=20, color="darkred",
                  justify="left", height=15, width=100, env="strong")
+    env_tag = _sanitize_html_tag(env)
+    txt1_html = _escape_html_text(txt1)
+    txt2_html = _escape_html_text(txt2)
     return """
-    <div style="color: $(color); text-align: $(justify); min-height: $(height)px; width: $(width)%;">
-      <div style="font-size: $(sz1)px;"><$(env)>$(txt1)</$(env)></div>
-      <div style="font-size: $(sz2)px;"><$(env)>$(txt2)</$(env)></div>
+    <div style="color: $(_escape_html_attr(color)); text-align: $(_sanitize_text_align(justify)); min-height: $(height)px; width: $(width)%;">
+      <div style="font-size: $(sz1)px;"><$(env_tag)>$(txt1_html)</$(env_tag)></div>
+      <div style="font-size: $(sz2)px;"><$(env_tag)>$(txt2_html)</$(env_tag)></div>
     </div>
     """
 end
@@ -107,7 +135,7 @@ function show_side_by_side_html(captured_outputs, titles=nothing)
         for output in captured_outputs
             html *= """
             <div style="flex: 1; align-content:flex-start; margin-right: 10px;">
-            <pre>$(output)</pre>
+            <pre>$(_escape_html_text(output))</pre>
             </div>
             """
         end
@@ -116,8 +144,8 @@ function show_side_by_side_html(captured_outputs, titles=nothing)
             title = titles[i]
             html *= """
             <div style="flex: 1; align-content:flex-start; margin-right: 10px;">
-            <h4>$(title)</h4>
-            <pre>$(output)</pre>
+            <h4>$(_escape_html_text(title))</h4>
+            <pre>$(_escape_html_text(output))</pre>
             </div>
             """
         end

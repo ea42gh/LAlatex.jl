@@ -5,6 +5,7 @@
 - `set_backend!` / `get_backend`
 - `syms`, `@syms`
 - `syms_sympy`, `@syms_sympy` (SymPy-only)
+- `Backend.backend_available` probes backend readiness in the current runtime
 - `import_sympy` for explicit SymPy import and diagnostics
 - `mixed_matrix`, `@mixed_matrix`
 
@@ -25,6 +26,9 @@ preferred.
 - `to_html`, `show_html`, `pr`
 - `capture_output`
 - `show_side_by_side_html`, `show_side_by_side`
+
+HTML helpers escape text content by default and are intended for ordinary text
+display. Build custom HTML outside these helpers if you need raw markup.
 
 ## LaTeX helpers
 

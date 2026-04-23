@@ -2,7 +2,8 @@
 
 ## SymPy import fails
 
-Ensure `sympy` is installed in the Python used by PythonCall.
+Ensure `PythonCall` is installed in Julia and `sympy` is installed in the
+Python used by PythonCall.
 
 ```julia
 using PythonCall

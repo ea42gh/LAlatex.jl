@@ -36,16 +36,19 @@ backend_available(::Type{SymbolicsBackend}) = true
 """
     backend_available(::Type{SymPyBackend}) -> Bool
 
-Return true when the SymPy backend is available.
+Return true when SymPy appears available in the current PythonCall runtime.
+
+This probes the configured Python environment without importing and caching the
+`sympy` module itself. Use `import_sympy()` for explicit initialization and
+diagnostics.
 """
 function backend_available(::Type{SymPyBackend})
     parent = parentmodule(@__MODULE__)
-    if !isdefined(parent, :import_sympy)
+    if !isdefined(parent, :_sympy_probe)
         return false
     end
     try
-        Base.invokelatest(getfield(parent, :import_sympy))
-        return true
+        return Base.invokelatest(getfield(parent, :_sympy_probe))
     catch
         return false
     end

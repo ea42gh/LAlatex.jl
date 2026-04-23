@@ -17,7 +17,19 @@ function _ensure_pythoncall()
         return nothing
     end
     if !_pythoncall_loaded[]
-        @eval using PythonCall
+        try
+            @eval import PythonCall
+        catch err
+            if Base.find_package("PythonCall") === nothing
+                error(
+                    "PythonCall is not installed in the active environment.\n\n" *
+                    "Install optional SymPy support with:\n" *
+                    "  using Pkg; Pkg.add(\"PythonCall\")\n\n" *
+                    "Original error:\n$err"
+                )
+            end
+            rethrow()
+        end
         _pythoncall_loaded[] = true
     end
     return Base.invokelatest(getfield, @__MODULE__, :PythonCall)

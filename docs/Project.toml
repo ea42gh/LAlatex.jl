@@ -1,3 +1,4 @@
 [deps]
 Documenter = "e30172f5-a6a5-5a46-863b-614d45cd2de4"
 LAlatex = "2feda2f4-7604-459e-bd73-51e960cd9dcb"
+PythonCall = "6099a3de-0909-46bc-b1f4-468b9a2dfc0d"

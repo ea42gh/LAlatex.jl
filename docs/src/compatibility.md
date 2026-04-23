@@ -2,12 +2,12 @@
 
 ## Julia
 
-- Julia 1.10.10+ required by package compatibility bounds.
+- Julia 1.10+ required by package compatibility bounds.
 
 ## Python
 
 - System Python 3.10+ recommended.
-- `sympy` is required when using the SymPy backend.
+- `PythonCall` and `sympy` are required when using the SymPy backend.
 
 ## Backend parity checklist
 

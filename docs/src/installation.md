@@ -1,6 +1,7 @@
 # Installation
 
-LAlatex is a Julia package. For SymPy support it relies on PythonCall.
+LAlatex is a Julia package. The default Symbolics backend does not require
+Python. SymPy support is optional and uses PythonCall.
 
 ## Julia install
 
@@ -12,6 +13,13 @@ Pkg.add("LAlatex")
 ## SymPy (optional)
 
 If you want the SymPy backend, install SymPy in the Python that PythonCall uses.
+
+Also install the optional Julia-side bridge:
+
+```julia
+using Pkg
+Pkg.add("PythonCall")
+```
 
 Recommended: point PythonCall at a system Python that already has SymPy.
 
