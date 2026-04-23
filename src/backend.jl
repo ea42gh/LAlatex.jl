@@ -38,6 +38,17 @@ backend_available(::Type{SymbolicsBackend}) = true
 
 Return true when the SymPy backend is available.
 """
-backend_available(::Type{SymPyBackend}) = false  # flipped to true in the extension
+function backend_available(::Type{SymPyBackend})
+    parent = parentmodule(@__MODULE__)
+    if !isdefined(parent, :import_sympy)
+        return false
+    end
+    try
+        Base.invokelatest(getfield(parent, :import_sympy))
+        return true
+    catch
+        return false
+    end
+end
 
 end # module

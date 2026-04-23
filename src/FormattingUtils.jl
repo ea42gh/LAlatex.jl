@@ -27,7 +27,17 @@ end
 Escape text content for `\\text{...}` LaTeX output.
 """
 function sanitize_text(s::AbstractString)
-    return replace(String(s), "_" => "\\_", "\$" => "\\\$")
+    escaped = IOBuffer()
+    for c in String(s)
+        if c == '\\'
+            print(escaped, "\\textbackslash{}")
+        elseif c in ('_', '$', '%', '&', '#', '{', '}')
+            print(escaped, "\\", c)
+        else
+            print(escaped, c)
+        end
+    end
+    return String(take!(escaped))
 end
 
 """

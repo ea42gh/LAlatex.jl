@@ -50,6 +50,7 @@ end
     @testset "Symbolics default" begin
         LAlatex.set_backend!(:symbolics)
         @test LAlatex.get_backend() isa LAlatex.Backend.SymbolicsBackend
+        @test LAlatex.Backend.backend_available(LAlatex.Backend.SymbolicsBackend)
 
         x = LAlatex.syms(:x)
         @test x isa Symbolics.Num
@@ -78,6 +79,7 @@ end
     if ok
         @testset "SymPy integration" begin
             LAlatex.set_backend!(:sympy)
+            @test LAlatex.Backend.backend_available(LAlatex.Backend.SymPyBackend)
             xs = LAlatex.syms_sympy(:x)
             ys = LAlatex.syms_sympy(:y; real=true, positive=true)
             @test string(xs) == "x"
@@ -150,6 +152,7 @@ end
     @testset "LaTeX helpers" begin
         LAlatex.set_backend!(:symbolics)
         @test LAlatex.to_latex("a_b") == "\\text{a\\_b}"
+        @test LAlatex.to_latex("50% & # {x} \\") == "\\text{50\\% \\& \\# \\{x\\} \\textbackslash{}}"
         @test LAlatex.to_latex("= 0") == "= 0"
         @test LAlatex.to_latex(LaTeXString("\\alpha + 1")) == "\\alpha + 1"
         @test LAlatex.to_latex('x') == "\\text{x}"
@@ -481,9 +484,13 @@ end
         combined = LAlatex.combine_formatters([LAlatex.bold_formatter, LAlatex.color_formatter], 1, 1, 1, "x")
         @test combined == "\\textcolor{red}{\\boldsymbol{x}}"
 
-        @test LAlatex.scientific_formatter(100.0; digits=1) == "100.0e2.0"
+        @test LAlatex.scientific_formatter(100.0; digits=1) == "1.0e2"
+        @test LAlatex.scientific_formatter(-0.0123; digits=2) == "-1.23e-2"
+        @test LAlatex.scientific_formatter(0.0; digits=1) == "0.0e0"
         @test LAlatex.percentage_formatter(0.125; digits=1) == 12.5
-        @test LAlatex.exponential_formatter(10000.0; digits=1) == "1.0e4.0"
+        @test LAlatex.exponential_formatter(10000.0; digits=1) == "1.0e4"
+        @test LAlatex.exponential_formatter(0.00012; digits=2) == "1.2e-4"
+        @test LAlatex.exponential_formatter(0.0; digits=1) == 0.0
         @test LAlatex.exponential_formatter(12.345; digits=2) == 12.34
 
         bold_number = LAlatex.L_show("42 bold -> ", 42; number_formatter=x -> "\\textbf{$x}")

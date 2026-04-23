@@ -3,8 +3,23 @@
 
 Format a numeric value in scientific notation using the base-10 exponent.
 """
+function _scientific_parts(x; digits=2)
+    if iszero(x)
+        return round(float(x); digits=digits), 0
+    end
+
+    exponent = floor(Int, log10(abs(x)))
+    mantissa = round(x / 10.0^exponent; digits=digits)
+    if abs(mantissa) >= 10
+        mantissa /= 10
+        exponent += 1
+    end
+    return mantissa, exponent
+end
+
 function scientific_formatter(x; digits=2)
-    return string(x, "e", round(log10(abs(x)), digits=digits))
+    mantissa, exponent = _scientific_parts(x; digits=digits)
+    return string(mantissa, "e", exponent)
 end
 
 """
@@ -22,9 +37,11 @@ end
 Format values outside [1e-3, 1e3) using compact exponential notation.
 """
 function exponential_formatter(x; digits=2)
-    if abs(x) >= 1e3 || abs(x) < 1e-3
-        return string(round(x / 10^(round(log10(abs(x)))), digits=digits), "e", round(log10(abs(x))))
+    if iszero(x)
+        return x isa Integer ? x : round(x; digits=digits)
+    elseif abs(x) >= 1e3 || abs(x) < 1e-3
+        return scientific_formatter(x; digits=digits)
     else
-        return round(x, digits=digits)
+        return x isa Integer ? x : round(x; digits=digits)
     end
 end

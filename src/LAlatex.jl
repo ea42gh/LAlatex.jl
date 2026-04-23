@@ -77,48 +77,6 @@ export scientific_formatter, percentage_formatter, exponential_formatter
 export tril_formatter, block_formatter, diagonal_blocks_formatter, jordanblock_formatter, rowechelon_formatter
 
 """
-    Base.transpose(x::Char)
-
-Return `x` unchanged for display helpers.
-"""
-Base.transpose(x::Char) = x
-
-"""
-    Base.adjoint(x::Char)
-
-Return `x` unchanged for display helpers.
-"""
-Base.adjoint(x::Char) = x
-
-"""
-    Base.transpose(x::String)
-
-Return `x` unchanged for display helpers.
-"""
-Base.transpose(x::String) = x
-
-"""
-    Base.adjoint(x::String)
-
-Return `x` unchanged for display helpers.
-"""
-Base.adjoint(x::String) = x
-
-"""
-    Base.transpose(x::LaTeXString)
-
-Return `x` unchanged for display helpers.
-"""
-Base.transpose(x::LaTeXString) = x
-
-"""
-    Base.adjoint(x::LaTeXString)
-
-Return `x` unchanged for display helpers.
-"""
-Base.adjoint(x::LaTeXString) = x
-
-"""
     get_backend() -> BackendTag
 
 Return the currently selected backend tag.
