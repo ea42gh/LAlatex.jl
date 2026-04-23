@@ -161,14 +161,8 @@ q = syms_sympy(:q)
 
 ## Python setup
 
-SymPy support is optional. Install `PythonCall` in the Julia environment when
-you want the SymPy backend, then point it at a system Python with SymPy
-installed if needed:
-
-```julia
-using Pkg
-Pkg.add("PythonCall")
-```
+SymPy support is optional. `PythonCall` is bundled with the package; point it
+at a system Python with SymPy installed if needed:
 
 ```bash
 python3 -m pip install sympy

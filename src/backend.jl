@@ -36,10 +36,10 @@ backend_available(::Type{SymbolicsBackend}) = true
 """
     backend_available(::Type{SymPyBackend}) -> Bool
 
-Return true when SymPy appears available in the current PythonCall runtime.
+Return true when SymPy can be imported in the current PythonCall runtime.
 
-This probes the configured Python environment without importing and caching the
-`sympy` module itself. Use `import_sympy()` for explicit initialization and
+This may initialize Python and import `sympy`, but it does not cache the module
+inside `LAlatex`. Use `import_sympy()` for explicit initialization and
 diagnostics.
 """
 function backend_available(::Type{SymPyBackend})

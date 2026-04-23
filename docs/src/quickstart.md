@@ -49,8 +49,6 @@ M = @mixed_matrix [1//2 x; (1 + im)//3 2*y]
 ## Python interop (optional)
 
 ```julia
-using Pkg
-Pkg.add("PythonCall")
 using PythonCall
 pyimport("sys").executable
 ```

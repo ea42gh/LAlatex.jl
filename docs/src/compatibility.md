@@ -7,7 +7,7 @@
 ## Python
 
 - System Python 3.10+ recommended.
-- `PythonCall` and `sympy` are required when using the SymPy backend.
+- `sympy` is required when using the SymPy backend.
 
 ## Backend parity checklist
 

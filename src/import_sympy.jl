@@ -21,17 +21,15 @@ end
 """
     _sympy_probe() -> Bool
 
-Return true when SymPy appears importable in the current PythonCall runtime,
-without importing and caching the `sympy` module itself.
+Return true when SymPy can be imported in the current PythonCall runtime,
+without caching the imported module in `LAlatex`.
 """
 function _sympy_probe()
     pc = _ensure_pythoncall()
     pc === nothing && return false
     try
-        importlib_util = Base.invokelatest(pc.pyimport, "importlib.util")
-        find_spec = Base.invokelatest(pc.pygetattr, importlib_util, "find_spec")
-        spec = Base.invokelatest(find_spec, "sympy")
-        return Base.invokelatest(pc.pyconvert, Bool, spec)
+        Base.invokelatest(pc.pyimport, "sympy")
+        return true
     catch
         return false
     end
