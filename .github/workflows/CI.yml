@@ -40,7 +40,7 @@ jobs:
         run: |
           "${{ steps.setup-python.outputs.python-path }}" -m pip install --upgrade pip sympy
           "${{ steps.setup-python.outputs.python-path }}" -c "import sys, sympy; print(sys.executable); print(sympy.__version__)"
-      - uses: julia-actions/setup-julia@v2
+      - uses: julia-actions/setup-julia@v3
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
