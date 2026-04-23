@@ -75,28 +75,6 @@ function _collect_symbolics_denominators!(denominators::Vector{<:Integer}, expr;
         return denominators
     end
 
-    storage = _symbolics_storage(expr)
-    dict = _symbolics_storage_dict(storage)
-    if dict !== nothing
-        if Symbolics.SymbolicUtils.isadd(expr)
-            coeff = _symbolics_storage_coeff(storage)
-            if coeff !== nothing
-                _push_literal_denominator!(denominators, coeff)
-            end
-            for (term, coeff) in dict
-                _push_literal_denominator!(denominators, coeff)
-                _collect_symbolics_division_key_denominators!(denominators, term)
-            end
-            return denominators
-        elseif Symbolics.SymbolicUtils.ismul(expr)
-            coeff = _symbolics_storage_coeff(storage)
-            if coeff !== nothing
-                _push_literal_denominator!(denominators, coeff)
-            end
-            return denominators
-        end
-    end
-
     if Symbolics.SymbolicUtils.iscall(expr)
         op = Symbolics.SymbolicUtils.operation(expr)
         args = Symbolics.SymbolicUtils.arguments(expr)
@@ -114,10 +92,14 @@ function _collect_symbolics_denominators!(denominators::Vector{<:Integer}, expr;
             if ok
                 _push_literal_denominator!(denominators, rat; include_integers=include_integers)
             else
+                coeff = try
+                    Symbolics.SymbolicUtils.get_mul_coefficient(expr)
+                catch
+                    nothing
+                end
+                coeff !== nothing && _push_literal_denominator!(denominators, coeff; include_integers=include_integers)
                 for arg in args
-                    if _symbolics_unwrap_literal(arg) isa Number
-                        _push_literal_denominator!(denominators, arg; include_integers=include_integers)
-                    elseif Symbolics.SymbolicUtils.iscall(arg) && Symbolics.SymbolicUtils.operation(arg) === (/)
+                    if Symbolics.SymbolicUtils.iscall(arg) && Symbolics.SymbolicUtils.operation(arg) === (/)
                         _collect_symbolics_division_key_denominators!(denominators, arg)
                     end
                 end

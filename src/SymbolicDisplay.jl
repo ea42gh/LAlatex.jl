@@ -115,46 +115,33 @@ function _symbolics_unwrap_num(expr)
     return expr isa Symbolics.Num ? Symbolics.unwrap(expr) : expr
 end
 
-function _symbolics_storage(expr)
-    expr = _symbolics_unwrap_num(expr)
-    return hasfield(typeof(expr), :data) ? getfield(expr, :data) : expr
-end
-
-function _symbolics_storage_dict(storage)
-    return hasfield(typeof(storage), :dict) ? getfield(storage, :dict) : nothing
-end
-
-function _symbolics_storage_coeff(storage)
-    return hasfield(typeof(storage), :coeff) ? getfield(storage, :coeff) : nothing
-end
-
-function _symbolics_coefficients_from_storage(storage)
-    coeffs = Any[]
-    const_coeff = _symbolics_storage_coeff(storage)
-    if const_coeff !== nothing && !iszero(const_coeff)
-        push!(coeffs, const_coeff)
-    end
-    dict = _symbolics_storage_dict(storage)
-    if dict !== nothing
-        append!(coeffs, values(dict))
-    end
-    return coeffs
-end
-
 function symbolic_term_coefficients(expr)
     expr = _symbolics_unwrap_num(expr)
-    storage = _symbolics_storage(expr)
-    dict = _symbolics_storage_dict(storage)
-    coeff = _symbolics_storage_coeff(storage)
 
-    # SymbolicUtils stores Add/Mul numeric coefficients separately from symbolic
-    # term keys. Keep that internal storage knowledge isolated here.
-    if Symbolics.SymbolicUtils.isadd(expr) && dict !== nothing
-        return _symbolics_coefficients_from_storage(storage)
+    if Symbolics.SymbolicUtils.is_literal_number(expr)
+        return Any[Symbolics.SymbolicUtils.unwrap_const(expr)]
     end
 
-    if Symbolics.SymbolicUtils.ismul(expr) && coeff !== nothing
-        return Any[coeff]
+    if expr isa Number
+        return Any[expr]
+    end
+
+    if Symbolics.SymbolicUtils.ismul(expr)
+        coeff = try
+            Symbolics.SymbolicUtils.get_mul_coefficient(expr)
+        catch
+            nothing
+        end
+        coeff !== nothing && return Any[coeff]
+    end
+
+    # Prefer the public TermInterface argument view over direct storage access.
+    if Symbolics.SymbolicUtils.isadd(expr)
+        coeffs = Any[]
+        for arg in Symbolics.SymbolicUtils.arguments(expr)
+            append!(coeffs, symbolic_term_coefficients(arg))
+        end
+        return coeffs
     end
 
     if Symbolics.SymbolicUtils.iscall(expr) && Symbolics.SymbolicUtils.operation(expr) == (+)
@@ -163,6 +150,42 @@ function symbolic_term_coefficients(expr)
             append!(coeffs, symbolic_term_coefficients(arg))
         end
         return coeffs
+    end
+
+    if Symbolics.SymbolicUtils.ismul(expr)
+        coeff = try
+            Symbolics.SymbolicUtils.get_mul_coefficient(expr)
+        catch
+            nothing
+        end
+        coeff !== nothing && return Any[coeff]
+    end
+
+    if Symbolics.SymbolicUtils.iscall(expr) && Symbolics.SymbolicUtils.operation(expr) == (*)
+        coeff = try
+            Symbolics.SymbolicUtils.get_mul_coefficient(expr)
+        catch
+            nothing
+        end
+        coeff !== nothing && return Any[coeff]
+    end
+
+    if Symbolics.SymbolicUtils.iscall(expr) && Symbolics.SymbolicUtils.operation(expr) == (-) &&
+       length(Symbolics.SymbolicUtils.arguments(expr)) == 1
+        coeffs = symbolic_term_coefficients(Symbolics.SymbolicUtils.arguments(expr)[1])
+        return map(-, coeffs)
+    end
+
+    if Symbolics.SymbolicUtils.iscall(expr) && Symbolics.SymbolicUtils.operation(expr) == (-) &&
+       length(Symbolics.SymbolicUtils.arguments(expr)) == 2
+        coeffs = symbolic_term_coefficients(Symbolics.SymbolicUtils.arguments(expr)[1])
+        append!(coeffs, map(-, symbolic_term_coefficients(Symbolics.SymbolicUtils.arguments(expr)[2])))
+        return coeffs
+    end
+
+    if Symbolics.SymbolicUtils.iscall(expr) && Symbolics.SymbolicUtils.operation(expr) == (/) &&
+       length(Symbolics.SymbolicUtils.arguments(expr)) >= 1
+        return symbolic_term_coefficients(Symbolics.SymbolicUtils.arguments(expr)[1])
     end
 
     return Any[1]
