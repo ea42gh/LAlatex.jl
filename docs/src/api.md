@@ -5,7 +5,7 @@
 - `set_backend!` / `get_backend`
 - `syms`, `@syms`
 - `syms_sympy`, `@syms_sympy` (SymPy-only)
-- `Backend.backend_available` probes backend readiness in the current runtime
+- `Backend.backend_usable` probes backend usability in the current runtime
 - `import_sympy` for explicit SymPy import and diagnostics
 - `mixed_matrix`, `@mixed_matrix`
 
@@ -78,7 +78,7 @@ Use `symopts=(; factor=true)` or `symopts=(factor=true,)` to build a `NamedTuple
 LAlatex.Backend
 LAlatex.Backend.get_backend
 LAlatex.Backend.set_backend!
-LAlatex.Backend.backend_available
+LAlatex.Backend.backend_usable
 LAlatex.SymbolicsBackendImpl.syms_symbolics
 LAlatex.SymbolicsBackendImpl.assume_symbolics!
 LAlatex.SymbolicsBackendImpl.symbolics_assumptions

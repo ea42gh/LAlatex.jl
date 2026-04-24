@@ -46,7 +46,7 @@ ok, sympy, pyexe = _sympy_available()
     @testset "Symbolics default" begin
         LAlatex.set_backend!(:symbolics)
         @test LAlatex.get_backend() isa LAlatex.Backend.SymbolicsBackend
-        @test LAlatex.Backend.backend_available(LAlatex.Backend.SymbolicsBackend)
+        @test LAlatex.Backend.backend_usable(LAlatex.Backend.SymbolicsBackend)
 
         x = LAlatex.syms(:x)
         @test x isa Symbolics.Num
@@ -75,7 +75,7 @@ ok, sympy, pyexe = _sympy_available()
     if ok
         @testset "SymPy integration" begin
             LAlatex.set_backend!(:sympy)
-            @test LAlatex.Backend.backend_available(LAlatex.Backend.SymPyBackend)
+            @test LAlatex.Backend.backend_usable(LAlatex.Backend.SymPyBackend)
             xs = LAlatex.syms_sympy(:x)
             ys = LAlatex.syms_sympy(:y; real=true, positive=true)
             @test string(xs) == "x"
