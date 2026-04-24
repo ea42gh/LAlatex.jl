@@ -17,6 +17,14 @@ See the Installation page for Julia + SymPy setup details.
 - `syms(...)`, `@syms` -> symbols (Symbolics or SymPy)
 - `set_backend!(:symbolics | :sympy)` -> backend switch
 
+## 1.0 migration
+
+- `Backend.backend_available(...)` was replaced by
+  `Backend.backend_usable(...)`.
+- `Backend.backend_usable(...)` is a runtime usability probe and may initialize
+  Python/import `sympy`.
+- Release tags now follow the package version directly: `1.0.0` -> `v1.0.0`.
+
 See the Quickstart page for a minimal setup and first render.
 
 See the Examples page for backend switching, assumptions, HTML helpers, and LaTeX helpers.

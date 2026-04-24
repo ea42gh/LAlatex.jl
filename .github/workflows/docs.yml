@@ -27,6 +27,10 @@ jobs:
           "${{ steps.setup-python.outputs.python-path }}" -m pip install --upgrade pip sympy
           "${{ steps.setup-python.outputs.python-path }}" -c "import sys, sympy; print(sys.executable); print(sympy.__version__)"
 
+      - name: Smoke-check notebooks
+        run: |
+          "${{ steps.setup-python.outputs.python-path }}" docs/smoke_notebooks.py
+
       - name: Set up Julia
         uses: julia-actions/setup-julia@v3
         with:

@@ -9,6 +9,10 @@ using PythonCall
 pyimport("sys").executable
 ```
 
+`Backend.backend_usable(LAlatex.Backend.SymPyBackend)` may also initialize
+Python and attempt the import as part of its runtime usability probe. Use
+`import_sympy()` when you want the direct import failure path and error message.
+
 ## Symbolics + complex rationals error
 
 This usually happens while Julia is constructing a matrix literal, before

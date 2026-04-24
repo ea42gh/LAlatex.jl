@@ -5,7 +5,8 @@
 - `set_backend!` / `get_backend`
 - `syms`, `@syms`
 - `syms_sympy`, `@syms_sympy` (SymPy-only)
-- `Backend.backend_usable` probes backend usability in the current runtime
+- `Backend.backend_usable` probes backend usability in the current runtime and
+  may initialize Python/import `sympy`
 - `import_sympy` for explicit SymPy import and diagnostics
 - `mixed_matrix`, `@mixed_matrix`
 
@@ -15,6 +16,12 @@ literal fails or coerces entries while mixing Symbolics/SymPy objects with exact
 rationals, complex rationals, or objects from different symbolic backends. For
 homogeneous numeric or symbolic matrices, ordinary Julia matrix literals are
 preferred.
+
+`Backend.backend_usable(...)` answers whether a backend is usable now in the
+current runtime session. For the SymPy backend this is not a static package
+installation check; it may initialize Python and attempt to import `sympy`.
+Use `import_sympy()` when you want explicit initialization and a direct error
+message for import failures.
 
 ## Assumptions (Symbolics metadata)
 

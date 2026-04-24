@@ -171,3 +171,30 @@ python3 -m pip install sympy
 ```bash
 export JULIA_PYTHONCALL_EXE=/path/to/python
 ```
+
+## 1.0 migration
+
+- `Backend.backend_available(...)` was removed. Use `Backend.backend_usable(...)`.
+- `Backend.backend_usable(...)` is a runtime usability probe. For the SymPy
+  backend, it may initialize Python and attempt to import `sympy`.
+- Use `import_sympy()` when you want explicit initialization or a more direct
+  import failure path for diagnostics.
+- Supported release tags now follow the package version directly:
+  `Project.toml` `1.0.0` corresponds to tag `v1.0.0`.
+
+Example:
+
+```julia
+using LAlatex
+
+if LAlatex.Backend.backend_usable(LAlatex.Backend.SymPyBackend)
+    set_backend!(:sympy)
+end
+```
+
+## Release policy
+
+- `Project.toml` is the authoritative package version.
+- Release tags follow the package version exactly: `1.0.0` -> `v1.0.0`.
+- Docs publish from `main` after the matching changes are green in CI.
+- Release steps and verification commands live in [RELEASING.md](RELEASING.md).
