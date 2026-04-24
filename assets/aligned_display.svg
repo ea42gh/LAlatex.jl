@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="430" height="96" viewBox="0 0 430 96" role="img" aria-label="Aligned equations">
+  <rect width="430" height="96" fill="#ffffff"/>
+  <text x="26" y="38" font-family="'Times New Roman', serif" font-size="30" fill="#111111">Ax</text>
+  <text x="86" y="38" font-family="'Times New Roman', serif" font-size="30" fill="#111111">=</text>
+  <text x="126" y="38" font-family="'Times New Roman', serif" font-size="30" fill="#111111">b</text>
+
+  <text x="26" y="74" font-family="'Times New Roman', serif" font-size="30" fill="#111111">x</text>
+  <text x="86" y="74" font-family="'Times New Roman', serif" font-size="30" fill="#111111">∈</text>
+  <text x="126" y="74" font-family="'Times New Roman', serif" font-size="30" fill="#111111">𝒩(A)</text>
+</svg>

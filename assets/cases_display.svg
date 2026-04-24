@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="520" height="118" viewBox="0 0 520 118" role="img" aria-label="Piecewise function definition">
+  <rect width="520" height="118" fill="#ffffff"/>
+  <text x="18" y="68" font-family="'Times New Roman', serif" font-size="34" fill="#111111">f(x) =</text>
+  <text x="126" y="24" font-family="'Times New Roman', serif" font-size="90" fill="#111111">{</text>
+
+  <text x="174" y="42" font-family="'Times New Roman', serif" font-size="28" fill="#111111">x²,</text>
+  <text x="258" y="42" font-family="'Times New Roman', serif" font-size="28" fill="#111111">x ≥ 0</text>
+
+  <text x="174" y="82" font-family="'Times New Roman', serif" font-size="28" fill="#111111">−x,</text>
+  <text x="258" y="82" font-family="'Times New Roman', serif" font-size="28" fill="#111111">x &lt; 0</text>
+</svg>

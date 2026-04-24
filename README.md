@@ -37,6 +37,17 @@ Gallery (rendered output):
   </tr>
 </table>
 
+<table width="100%">
+  <tr>
+    <th>Piecewise definition</th>
+    <th>Aligned derivation</th>
+  </tr>
+  <tr>
+    <td><img src="assets/cases_display.svg" alt="Piecewise definition"></td>
+    <td><img src="assets/aligned_display.svg" alt="Aligned derivation"></td>
+  </tr>
+</table>
+
 LAlatex turns Julia objects into compact, readable LaTeX. It is designed for
 teaching and visualization: matrices, block matrices, linear combinations,
 symbolic expressions, and mixed text+math all render with consistent styling.
