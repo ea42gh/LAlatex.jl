@@ -29,9 +29,11 @@ Gallery (rendered output):
 <table width="100%">
   <tr>
     <th>SymPy linear combination</th>
+    <th>Grouped set display</th>
   </tr>
   <tr>
     <td><img src="assets/sympy_lc.svg" alt="SymPy linear combination"></td>
+    <td><img src="assets/set_display.svg" alt="Grouped set display"></td>
   </tr>
 </table>
 
@@ -164,6 +166,26 @@ $\text{Colorize odd values,  A=} \left(\begin{array}{rr|r}
 \textcolor{red}{1} & 2 & 4 \\ \hline
 \textcolor{red}{3} & 4 & \textcolor{red}{5} \\
 \end{array}\right)$
+```
+
+```text
+$T(v) = \begin{cases}
+\begin{bmatrix}
+1 \\
+0 \\
+\end{bmatrix}, & v \in \operatorname{span}\{e_1\} \\
+\begin{bmatrix}
+0 \\
+1 \\
+\end{bmatrix}, & \text{otherwise} \\
+\end{cases}$
+```
+
+```text
+$\begin{aligned}
+Ax &= b \\
+x &\in \mathcal{N}(A)
+\end{aligned}$
 ```
 
 ## Backends (Symbolics and SymPy)
