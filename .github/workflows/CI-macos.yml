@@ -1,4 +1,4 @@
-name: CI
+name: CI-macOS
 on:
   push:
     branches:
@@ -6,33 +6,17 @@ on:
   pull_request:
   workflow_dispatch:
 concurrency:
-  # Keep only the newest run per ref so stale queued runs do not pile up.
+  # Keep only the newest macOS run per ref so stale queued runs do not pile up.
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   test:
-    name: Julia ${{ matrix.version }} - ${{ matrix.os }} - ${{ matrix.arch }}
-    runs-on: ${{ matrix.os }}
+    name: Julia 1.10 - macos-13 - x64
+    runs-on: macos-13
     timeout-minutes: 60
-    permissions: # needed to allow julia-actions/cache to proactively delete old caches that it has created
+    permissions:
       actions: write
       contents: read
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - version: '1.10'
-            os: ubuntu-latest
-            arch: x64
-          - version: '1.12'
-            os: ubuntu-latest
-            arch: x64
-          - version: 'pre'
-            os: ubuntu-latest
-            arch: x64
-          - version: '1.10'
-            os: windows-latest
-            arch: x64
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
@@ -46,8 +30,8 @@ jobs:
           "${{ steps.setup-python.outputs.python-path }}" -c "import sys, sympy; print(sys.executable); print(sympy.__version__)"
       - uses: julia-actions/setup-julia@v3
         with:
-          version: ${{ matrix.version }}
-          arch: ${{ matrix.arch }}
+          version: "1.10"
+          arch: x64
       - uses: julia-actions/cache@v3
       - uses: julia-actions/julia-buildpkg@v1
         env:
