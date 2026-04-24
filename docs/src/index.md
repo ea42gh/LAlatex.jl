@@ -26,6 +26,7 @@ See the Installation page for Julia + SymPy setup details.
 - Release tags now follow the package version directly: `1.0.0` -> `v1.0.0`.
 
 See the Quickstart page for a minimal setup and first render.
+See the Upgrading page for the 1.0 migration notes and current release policy.
 
 See the Examples page for backend switching, assumptions, HTML helpers, and LaTeX helpers.
 See the Display policy page for `cases` and `aligned` rendering rules.
