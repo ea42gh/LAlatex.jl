@@ -4,10 +4,14 @@
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://ea42gh.github.io/LAlatex/dev/)
 [![Build Status](https://github.com/ea42gh/LAlatex/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/ea42gh/LAlatex/actions/workflows/CI.yml?query=branch%3Amain)
 
+LAlatex is a Julia package for rendering linear algebra objects and symbolic
+expressions as clean LaTeX for notebooks, lecture notes, handouts, and docs.
+
 Why LAlatex?
 - It keeps linear algebra notation consistent across lectures, notes, and notebooks.
 - It renders mixed text+math without hand-written LaTeX.
 - It supports block structure and symbolic backends out of the box.
+- It gives you notebook-friendly helpers for piecewise displays, aligned derivations, and block matrices.
 
 Gallery (rendered output):
 
@@ -34,8 +38,12 @@ Gallery (rendered output):
 LAlatex turns Julia objects into compact, readable LaTeX. It is designed for
 teaching and visualization: matrices, block matrices, linear combinations,
 symbolic expressions, and mixed text+math all render with consistent styling.
-If you teach linear algebra or build math-heavy notebooks, this keeps your
+If you teach linear algebra, write math-heavy notebooks, or want more control
+over how arrays and symbolic expressions render in Julia, this keeps your
 notation consistent without hand-writing LaTeX.
+LAlatex builds on Julia's LaTeX tooling, including `Latexify`, and adds
+higher-level helpers for linear algebra, symbolic display, and notebook-friendly
+rendering.
 
 Highlights:
 - `L_show(...)` returns a LaTeX string ready for Markdown, Documenter, or PDF.
