@@ -2,6 +2,12 @@ name: Register Package
 
 on:
   workflow_dispatch:
+    inputs:
+      subdir:
+        description: Package subdirectory, leave empty for repo root
+        required: false
+        default: ""
+        type: string
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
