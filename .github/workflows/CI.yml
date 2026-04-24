@@ -41,6 +41,7 @@ jobs:
         with:
           python-version: "3.11"
       - name: Install Python deps
+        shell: bash
         run: |
           "${{ steps.setup-python.outputs.python-path }}" -m pip install --upgrade pip sympy
           "${{ steps.setup-python.outputs.python-path }}" -c "import sys, sympy; print(sys.executable); print(sympy.__version__)"
