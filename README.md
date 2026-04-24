@@ -48,6 +48,7 @@ rendering.
 Highlights:
 - `L_show(...)` returns a LaTeX string ready for Markdown, Documenter, or PDF.
 - `l_show(...)` returns a `LaTeXString` for inline display in notebooks.
+- `set(...)`, `cases(...)`, and `aligned(...)` cover grouped displays, piecewise definitions, and derivation chains.
 - Works with numbers, arrays, `BlockArray`s, `LinearCombination`s, and tuples.
 - Supports Symbolics and SymPy backends for symbolic algebra.
 
@@ -61,6 +62,7 @@ Pkg.add("LAlatex")
 API cheat sheet:
 - `L_show(...)` -> LaTeX string
 - `l_show(...)` -> `LaTeXString` for display
+- `set(...)`, `cases(...)`, `aligned(...)` -> grouped displays and structured derivations
 - `syms(...)`, `@syms` -> symbols (Symbolics or SymPy)
 - `set_backend!(:symbolics | :sympy)` -> backend switch
 
@@ -75,10 +77,23 @@ Quick start:
 
 ```julia
 using LAlatex
+using LaTeXStrings
 
 A = [1 2; 3 4]
 println(L_show("A = ", A))
 l_show("A = ", A)
+
+l_show("S = ", set(1, 2, 3; separator=L", "))
+
+l_show("f(x) = ", cases(
+    x^2 => L"x \\ge 0",
+    (-x, L"x < 0"),
+))
+
+l_show(aligned(
+    L"Ax" => L"b",
+    (L"x", L"\\in", L"\\mathcal{N}(A)"),
+))
 ```
 
 Python interop:
@@ -93,12 +108,23 @@ print(jl.LAlatex.L_show("A = ", [[1, 2], [3, 4]]))
 Notebook highlight:
 - `docs/src/notebooks/LAlatex_L_show_Guide.ipynb`
 
-Linear combinations and mixed text/math:
+Structured display helpers:
 
 ```julia
-s = [2, -1, 3]
-X = [[1, 0], [0, 1], [1, 1]]
-l_show("x = ", lc(s, X))
+using LAlatex
+using LaTeXStrings
+
+l_show("S = ", set("basis vectors", [1, 0], [0, 1]; arraystyle=:bmatrix, separator=L",\\;"))
+
+l_show("T(v) = ", cases(
+    [1, 0] => L"v \\in \\operatorname{span}\\{e_1\\}",
+    ([0, 1], "otherwise"),
+); arraystyle=:bmatrix)
+
+l_show(aligned(
+    L"Ax" => L"b",
+    (L"x", L"\\in", L"\\mathcal{N}(A)"),
+))
 ```
 
 Mini gallery:
