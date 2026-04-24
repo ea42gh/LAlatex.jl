@@ -198,3 +198,14 @@ end
 - Release tags follow the package version exactly: `1.0.0` -> `v1.0.0`.
 - Docs publish from `main` after the matching changes are green in CI.
 - Release steps and verification commands live in [RELEASING.md](RELEASING.md).
+
+## Benchmarking
+
+Run the lightweight benchmark script from the package root:
+
+```bash
+julia --project=. perf/benchmark.jl
+```
+
+It measures representative first-call paths for matrix rendering, `lc(...)`,
+Symbolics rendering, and the first SymPy render when the SymPy backend is usable.

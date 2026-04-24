@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Added Windows and macOS CI coverage alongside the Ubuntu matrix.
+- Added structural and executed notebook smoke checks to the docs workflow.
+- Documented 1.0 migration, release policy, and release checklist expectations.
+- Added a lightweight benchmark script at `perf/benchmark.jl` for first-call render timing.
 - Fixed Symbolics expression rendering in `L_show` so symbolic functions such as `exp(-3t)` no longer produce embedded `equation` environments inside matrices.
 - Preserved rational-power base parentheses, including outputs such as `L_show((3//10)^n)`.
 - Clarified and hardened symbolic denominator factoring: denominators are factored from literal rationals, numeric symbolic coefficients, and explicit scalar divisions, but not from powers, functions, or non-scalar symbolic denominators.

@@ -52,3 +52,14 @@ M = @mixed_matrix [1//2 x; (1 + im)//3 2*y]
 using PythonCall
 pyimport("sys").executable
 ```
+
+## Benchmarking
+
+From the repository root, run:
+
+```julia
+julia --project=. perf/benchmark.jl
+```
+
+This gives a lightweight view of first-call rendering cost for the main display
+paths and reports whether the SymPy-backed render path was exercised or skipped.
