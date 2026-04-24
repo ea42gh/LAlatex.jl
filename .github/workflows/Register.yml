@@ -2,11 +2,6 @@ name: Register Package
 
 on:
   workflow_dispatch:
-    inputs:
-      version:
-        description: Version to register
-        required: true
-        type: string
 
 env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
@@ -22,4 +17,4 @@ jobs:
       - uses: julia-actions/RegisterAction@latest
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          version: ${{ inputs.version }}
+          registrator: JuliaRegistrator
