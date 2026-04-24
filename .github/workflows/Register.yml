@@ -3,6 +3,11 @@ name: Register Package
 on:
   workflow_dispatch:
     inputs:
+      version:
+        description: Version to register
+        required: true
+        default: "1.0.0"
+        type: string
       subdir:
         description: Package subdirectory, leave empty for repo root
         required: false
