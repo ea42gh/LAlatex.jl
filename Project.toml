@@ -1,6 +1,6 @@
 name = "LAlatex"
 uuid = "2feda2f4-7604-459e-bd73-51e960cd9dcb"
-version = "1.0.0-DEV"
+version = "1.0.0"
 authors = ["ea42_github@mail.com"]
 
 [deps]

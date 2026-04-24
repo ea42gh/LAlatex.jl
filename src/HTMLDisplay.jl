@@ -12,6 +12,14 @@ end
 
 _escape_html_attr(x) = _escape_html_text(x)
 
+function _sanitize_css_color(color)
+    value = strip(String(color))
+    isempty(value) && return "darkred"
+    occursin(r"^#[0-9A-Fa-f]{3}([0-9A-Fa-f]{3})?$", value) && return value
+    occursin(r"^[A-Za-z][A-Za-z0-9-]*$", value) && return value
+    return "darkred"
+end
+
 function _sanitize_html_tag(env)
     tag = lowercase(strip(String(env)))
     occursin(r"^[a-z][a-z0-9-]*$", tag) || return "strong"
@@ -22,6 +30,24 @@ function _sanitize_text_align(justify)
     value = lowercase(strip(String(justify)))
     value in ("left", "right", "center", "justify", "start", "end") && return value
     return "left"
+end
+
+function _sanitize_px(value, default)
+    try
+        parsed = Int(floor(float(value)))
+        return max(parsed, 0)
+    catch
+        return default
+    end
+end
+
+function _sanitize_width_percent(value, default)
+    try
+        parsed = Int(floor(float(value)))
+        return clamp(parsed, 0, 100)
+    catch
+        return default
+    end
 end
 
 """
@@ -51,8 +77,12 @@ function to_html(txt; sz=20, color="darkred", justify="left",
                  height=15, width=100, env="strong")
     env_tag = _sanitize_html_tag(env)
     txt_html = _escape_html_text(txt)
+    font_size = _sanitize_px(sz, 20)
+    box_height = _sanitize_px(height, 15)
+    box_width = _sanitize_width_percent(width, 100)
+    css_color = _sanitize_css_color(color)
     return """
-    <div style="font-size: $(sz)px; color: $(_escape_html_attr(color)); text-align: $(_sanitize_text_align(justify)); height: $(height)px; width: $(width)%;">
+    <div style="font-size: $(font_size)px; color: $(_escape_html_attr(css_color)); text-align: $(_sanitize_text_align(justify)); height: $(box_height)px; width: $(box_width)%; overflow-wrap: anywhere;">
       <$(env_tag)>$(txt_html)</$(env_tag)>
     </div>
     """
@@ -68,10 +98,15 @@ function to_html(txt1, txt2; sz1=20, sz2=20, color="darkred",
     env_tag = _sanitize_html_tag(env)
     txt1_html = _escape_html_text(txt1)
     txt2_html = _escape_html_text(txt2)
+    font_size_1 = _sanitize_px(sz1, 20)
+    font_size_2 = _sanitize_px(sz2, 20)
+    box_height = _sanitize_px(height, 15)
+    box_width = _sanitize_width_percent(width, 100)
+    css_color = _sanitize_css_color(color)
     return """
-    <div style="color: $(_escape_html_attr(color)); text-align: $(_sanitize_text_align(justify)); min-height: $(height)px; width: $(width)%;">
-      <div style="font-size: $(sz1)px;"><$(env_tag)>$(txt1_html)</$(env_tag)></div>
-      <div style="font-size: $(sz2)px;"><$(env_tag)>$(txt2_html)</$(env_tag)></div>
+    <div style="color: $(_escape_html_attr(css_color)); text-align: $(_sanitize_text_align(justify)); min-height: $(box_height)px; width: $(box_width)%; overflow-wrap: anywhere;">
+      <div style="font-size: $(font_size_1)px;"><$(env_tag)>$(txt1_html)</$(env_tag)></div>
+      <div style="font-size: $(font_size_2)px;"><$(env_tag)>$(txt2_html)</$(env_tag)></div>
     </div>
     """
 end
