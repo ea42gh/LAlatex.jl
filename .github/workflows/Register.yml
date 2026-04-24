@@ -1,16 +1,25 @@
 name: Register Package
+
 on:
   workflow_dispatch:
-      inputs:
-            version:
-                description: 'Version to register'
-                required: true
-                type: string
+    inputs:
+      version:
+        description: Version to register
+        required: true
+        type: string
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+permissions:
+  contents: write
+
 jobs:
   register:
-      runs-on: ubuntu-latest
-      steps:
-          - uses: actions/checkout@v4
-          - uses: julia-actions/RegisterAction@latest
-            with:
-                token: ${{ secrets.GITHUB_TOKEN }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: julia-actions/RegisterAction@latest
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          version: ${{ inputs.version }}
