@@ -22,7 +22,8 @@ Confirm:
 - The docs workflow uses the exact `actions/setup-python` interpreter path for
   `JULIA_PYTHONCALL_EXE`.
 - Notebook smoke checks pass.
-- The secondary CI OS lane is green.
+- The secondary CI OS lanes are green.
+- Branch protection on `main` requires the CI and Docs checks before merge.
 
 ## Backend note
 

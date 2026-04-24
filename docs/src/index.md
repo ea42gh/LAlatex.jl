@@ -54,7 +54,7 @@ See the Display policy page for `cases` and `aligned` rendering rules.
 
 ## Troubleshooting
 
-- **SymPy import fails**: Ensure `sympy` is installed in the Python used by PythonCall. Check with `PythonCall.pyimport("sys").executable`.
+- **SymPy import fails**: Ensure `sympy` is installed in the Python used by PythonCall. Check with `import_sympy()` or `PythonCall.pyimport("sys").executable`.
 - **Mixed symbolic/numeric matrices**: Use ordinary Julia literals for homogeneous matrices. Use `mixed_matrix` or `@mixed_matrix` only when a heterogeneous symbolic/numeric matrix fails during construction because Julia tries to promote all entries to one type.
 - **Math font vs text font**: Use `L"..."`/`LaTeXString` for math; plain strings are wrapped in `\\text{...}` by `L_show`.
 - **SymPy tests skipped**: Set `JULIA_PYTHONCALL_EXE` to a Python that has SymPy installed.

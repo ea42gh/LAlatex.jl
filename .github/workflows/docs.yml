@@ -36,6 +36,13 @@ jobs:
         with:
           version: "1.10"
 
+      - name: Execute representative notebook smoke test
+        env:
+          JULIA_CONDAPKG_BACKEND: Null
+          JULIA_PYTHONCALL_EXE: ${{ steps.setup-python.outputs.python-path }}
+        run: |
+          "${{ steps.setup-python.outputs.python-path }}" docs/execute_notebook_smoke.py docs/src/notebooks/LAlatex_L_show_Guide.ipynb
+
       - name: Cache Julia artifacts
         uses: julia-actions/cache@v3
 
