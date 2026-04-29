@@ -575,6 +575,11 @@ ok, sympy, pyexe = _sympy_available()
         @test occursin("\\frac{1}{2}", unfactored_group)
         @test !occursin("\\frac{1}{6} \\left", unfactored_group)
 
+        unfactored_lc = LAlatex.L_show(LAlatex.lc([1], [[1//2, 1//3]]; factor_out=false))
+        @test occursin("\\frac{1}{2}", unfactored_lc)
+        @test occursin("\\frac{1}{3}", unfactored_lc)
+        @test !occursin("\\frac{1}{6} \\left", unfactored_lc)
+
         expanded_group = LAlatex.L_show(LAlatex.set((x + y)^2; symopts=(expand=true,)))
         @test !occursin("\\left(y + x\\right)^{2}", expanded_group)
         @test occursin("x^{2}", expanded_group) || occursin("x^2", expanded_group)

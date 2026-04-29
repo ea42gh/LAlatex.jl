@@ -819,11 +819,12 @@ function L_show_lc(lcobj::LinearCombination; setstyle=:parray, arraystyle=:parra
         :parens_coeff=>true, :omit_one=>true, :drop_zero=>true),
         Dict(pairs(lcobj.options))
     )
+    effective_factor_out = get(opts, :factor_out, factor_out)
 
     inner = x -> L_show_core(x;
         arraystyle=arraystyle, color=color,
         number_formatter=number_formatter, per_element_style=per_element_style,
-        factor_out=factor_out, symopts=symopts)
+        factor_out=effective_factor_out, symopts=symopts)
 
     needs_parens = x -> begin
         t = replace(inner(x), r"\s" => "")
