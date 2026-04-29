@@ -155,7 +155,7 @@ function _symbolics_to_latex(x)
         end
     end
 
-    s = string(latexify(x))
+    s = normalize_symbolics_latex(string(latexify(x)))
     return isempty(s) ? string(x) : s
 end
 

@@ -281,6 +281,12 @@ ok, sympy, pyexe = _sympy_available()
         latex_exp = LAlatex.to_latex(exp(-3t))
         @test occursin("e^{", latex_exp)
         @test !occursin("\\begin{equation}", latex_exp)
+        @variables α[1:4]
+        norm2_x_s = (13189//36) - (440//9) * α[3] + (25//9) * (α[3]^2) + α[4]^2
+        latex_norm2_x_s = LAlatex.L_show(L"\\Vert x_p + x_h \\Vert^2 = ", norm2_x_s)
+        @test !occursin("\\begin{equation}", latex_norm2_x_s)
+        @test occursin("\\alpha_{3}", latex_norm2_x_s)
+        @test occursin("\\alpha_{4}", latex_norm2_x_s)
         exp_vec = Num[(6//1) - (5//1)*exp(-3t), (18//1) - (19//1)*exp(-3t), (18//1) - (16//1)*exp(-3t)]
         exp_vec_latex = LAlatex.L_show(exp_vec)
         @test occursin("e^{", exp_vec_latex)
