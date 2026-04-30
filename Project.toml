@@ -4,8 +4,8 @@ version = "1.0.0"
 authors = ["ea42_github@mail.com"]
 
 [deps]
-IOCapture = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
 BlockArrays = "8e7c35d0-a365-5155-bbbb-fb81a777f24e"
+IOCapture = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
 LaTeXStrings = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 Latexify = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
 LinearAlgebra = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
@@ -15,8 +15,8 @@ SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 Symbolics = "0c5d862f-8b57-4792-8d23-62f2024744c7"
 
 [compat]
-IOCapture = "0.2.5"
 BlockArrays = "1.4.0"
+IOCapture = "0.2.5, 1"
 LaTeXStrings = "1.4.0"
 Latexify = "0.16.10"
 PrecompileTools = "1.2.0"
@@ -26,5 +26,6 @@ julia = "1.10"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+
 [targets]
 test = ["Test"]
