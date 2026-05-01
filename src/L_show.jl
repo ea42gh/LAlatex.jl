@@ -957,5 +957,6 @@ L_show_core(obj::SubString{String}; kwargs...) = L_show_core(String(obj); kwargs
 Return a LaTeXString for display in notebook environments.
 """
 function l_show(args...; kwargs...)
-    return LaTeXString(L_show(args...; kwargs...))
+    rendered = L_show(args...; kwargs...)
+    return LaTeXString(strip_math_delims(rendered))
 end

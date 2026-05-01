@@ -195,6 +195,10 @@ ok, sympy, pyexe = _sympy_available()
             @test occursin("sp", latex_sp)
         end
 
+        quad_render = LAlatex.l_show(L"\\quad")
+        @test quad_render isa LaTeXString
+        @test getfield(quad_render, :s) == "\\quad"
+
     end
 
     @testset "Symbolic display policy" begin
